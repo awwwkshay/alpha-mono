@@ -1,0 +1,11 @@
+{
+    "recommendations": [
+        "astral-sh.ty",
+        "charliermarsh.ruff",
+        "ms-python.python",
+        "ms-python.debugpy",
+        "ms-python.vscode-python-envs",
+        "docker.docker",
+        "ms-ossdata.vscode-pgsql"
+    ]
+}

@@ -1,0 +1,11 @@
+services:
+  litellm:
+    image: litellm/litellm:latest
+    container_name: litellm
+    ports:
+      - "8000:8000"
+    environment:
+      - LITELLM_MODEL=meta-llama/Llama-2-7b
+      - LITELLM_DEVICE=auto
+      - LITELLM_NUM_THREADS=4
+    restart: unless-stopped

@@ -1,0 +1,19 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "basic-app"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = ["core"]
+
+[tool.uv.sources]
+core = { workspace = true }
+
+[project.scripts]
+basic-app = "basic_app.main:run"
+
+

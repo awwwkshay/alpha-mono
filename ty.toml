@@ -1,2 +1,3 @@
 [environment]
 python-version = "3.14"
+extra-paths = ["packages/core/src", "apps/basic-app/src"]
