@@ -19,5 +19,6 @@ alpha-core = { workspace = true }
 [project.scripts]
 basic-app = "basic_app.main:run"
 workspace-demo = "basic_app.main:run_workspace_demo"
+eval-demo = "basic_app.main:run_eval_demo"
 
 

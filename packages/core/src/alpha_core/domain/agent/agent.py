@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import asyncio
 import json
 from collections.abc import AsyncIterator
 from typing import TYPE_CHECKING, Any, cast
 
+from alpha_core.domain.evals.runner import run_scorers
+from alpha_core.domain.evals.scorer import ScorerResult
 from alpha_core.schemas.agent_config import AgentConfig
 from alpha_core.schemas.app_context import AppContext
 
@@ -54,7 +57,7 @@ class Agent:
         self.config = config
         self._workspace = workspace
 
-    async def generate_async(self, user_prompt: str, _context: AppContext) -> str:
+    async def _generate_raw(self, user_prompt: str) -> str:
         from litellm import acompletion
 
         messages: list[Any] = [
@@ -109,6 +112,19 @@ class Agent:
             f"Agent '{self.config.name}' exceeded"
             f" {_MAX_TOOL_ITERATIONS} tool-call iterations"
         )
+
+    async def generate_async(self, user_prompt: str, _context: AppContext) -> str:
+        content = await self._generate_raw(user_prompt)
+        if self.config.scorers:
+            asyncio.create_task(run_scorers(self.config.scorers, user_prompt, content))
+        return content
+
+    async def generate_with_evals_async(
+        self, user_prompt: str, _context: AppContext
+    ) -> tuple[str, dict[str, ScorerResult]]:
+        content = await self._generate_raw(user_prompt)
+        scores = await run_scorers(self.config.scorers, user_prompt, content)
+        return content, scores
 
     async def stream_async(
         self, user_prompt: str, _context: AppContext

@@ -57,7 +57,7 @@ Key rules:
 Once questions are answered (or if no questions are needed), create a plan file at:
 
 ```text
-.agent/temp/<task_name>_plan.md
+.claude/temp/<task_name>_plan.md
 ```
 
 Use a short, lowercase, hyphenated name for `task_name` that matches the feature (e.g. `streaming-tool-results_plan.md`).
@@ -148,7 +148,7 @@ After verification passes, update `README.md` and any affected files under `docs
 Create a summary file at:
 
 ```text
-.agent/temp/<task_name>_work_summary.md
+.claude/temp/<task_name>_work_summary.md
 ```
 
 The summary file must include:

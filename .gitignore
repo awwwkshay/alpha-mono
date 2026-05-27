@@ -1,5 +1,6 @@
 # PROJECT SPECIFIC
 **/*_workspace/
+.claude/temp/
 
 # MACOS
 
