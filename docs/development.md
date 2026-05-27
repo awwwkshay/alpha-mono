@@ -39,3 +39,5 @@ uv add <package>
 ```bash
 uv add --dev <package>
 ```
+
+Last updated: 2026-05-27
