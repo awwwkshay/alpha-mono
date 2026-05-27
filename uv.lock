@@ -164,10 +164,14 @@ version = "0.1.0"
 source = { editable = "apps/basic-app" }
 dependencies = [
     { name = "alpha-core" },
+    { name = "pydantic" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "alpha-core", editable = "packages/core" }]
+requires-dist = [
+    { name = "alpha-core", editable = "packages/core" },
+    { name = "pydantic", specifier = ">=2.13.4" },
+]
 
 [[package]]
 name = "certifi"

@@ -10,7 +10,4 @@ dependencies = []
 dev = ["pre-commit>=4.6.0", "ruff>=0.15.14", "ty>=0.0.39"]
 
 [tool.uv.workspace]
-members = [
-    "packages/core",
-    "apps/basic-app",
-]
+members = ["packages/*", "apps/*"]
