@@ -5,6 +5,16 @@ import json
 from collections.abc import AsyncIterator
 from typing import TYPE_CHECKING, Any, cast
 
+from litellm.types.llms.openai import (
+    AllMessageValues,
+    ChatCompletionAssistantMessage,
+    ChatCompletionAssistantToolCall,
+    ChatCompletionSystemMessage,
+    ChatCompletionToolCallFunctionChunk,
+    ChatCompletionToolMessage,
+    ChatCompletionUserMessage,
+)
+
 from alpha_core.domain.evals.runner import run_scorers
 from alpha_core.domain.evals.scorer import ScorerResult
 from alpha_core.schemas.agent_config import AgentConfig
@@ -29,23 +39,24 @@ def _build_system(config: AgentConfig, workspace: Workspace | None) -> str:
 
 
 def _accumulate_tool_call_delta(
-    tc_delta: Any, collected: dict[int, dict[str, Any]]
+    tc_delta: Any, collected: dict[int, ChatCompletionAssistantToolCall]
 ) -> None:
     idx: int = tc_delta.index
     if idx not in collected:
-        collected[idx] = {
-            "id": tc_delta.id or "",
-            "type": "function",
-            "function": {"name": "", "arguments": ""},
-        }
+        collected[idx] = ChatCompletionAssistantToolCall(
+            id=tc_delta.id or "",
+            type="function",
+            function=ChatCompletionToolCallFunctionChunk(name="", arguments=""),
+        )
     entry = collected[idx]
     if tc_delta.id:
         entry["id"] = tc_delta.id
     if tc_delta.function:
+        fn = entry["function"]
         if tc_delta.function.name:
-            entry["function"]["name"] += tc_delta.function.name
+            fn["name"] = (fn.get("name") or "") + tc_delta.function.name
         if tc_delta.function.arguments:
-            entry["function"]["arguments"] += tc_delta.function.arguments
+            fn["arguments"] = (fn.get("arguments") or "") + tc_delta.function.arguments
 
 
 class Agent:
@@ -60,11 +71,14 @@ class Agent:
     async def _generate_raw(self, user_prompt: str) -> str:
         from litellm import acompletion
 
-        messages: list[Any] = [
-            {"role": "system", "content": _build_system(self.config, self._workspace)},
-            {"role": "user", "content": user_prompt},
+        messages: list[AllMessageValues] = [
+            ChatCompletionSystemMessage(
+                role="system", content=_build_system(self.config, self._workspace)
+            ),
+            ChatCompletionUserMessage(role="user", content=user_prompt),
         ]
         tools = self._workspace.get_tools() if self._workspace else None
+        tool_calls_executed = False
 
         for _ in range(_MAX_TOOL_ITERATIONS):
             kwargs: dict[str, Any] = {"model": self.config.model, "messages": messages}
@@ -73,30 +87,43 @@ class Agent:
 
             response = cast("ModelResponse", await acompletion(**kwargs))
             msg = response.choices[0].message
-            tool_calls = getattr(msg, "tool_calls", None)
+            # Normalise: LiteLLM/Gemini may return [] instead of None when there
+            # are no tool calls — an empty list is falsy but should be treated as None.
+            tool_calls = getattr(msg, "tool_calls", None) or None
 
             if not tool_calls:
                 content = msg.content
                 if content is None:
+                    if tool_calls_executed:
+                        # Gemini sometimes returns no content after completing a
+                        # tool-call cycle; the tool results are the answer.
+                        # Return the most recent tool result from the message history.
+                        for entry in reversed(messages):
+                            if entry["role"] == "tool":
+                                raw = entry.get("content", "")  # type: ignore[union-attr]
+                                return raw if isinstance(raw, str) else ""
+                        return ""
                     raise ValueError("Model returned no content")
                 return content
 
+            tool_calls_executed = True
+
             messages.append(
-                {
-                    "role": "assistant",
-                    "content": msg.content,
-                    "tool_calls": [
-                        {
-                            "id": tc.id,
-                            "type": tc.type,
-                            "function": {
-                                "name": tc.function.name,
-                                "arguments": tc.function.arguments,
-                            },
-                        }
+                ChatCompletionAssistantMessage(
+                    role="assistant",
+                    content=msg.content,
+                    tool_calls=[
+                        ChatCompletionAssistantToolCall(
+                            id=tc.id,
+                            type="function",
+                            function=ChatCompletionToolCallFunctionChunk(
+                                name=tc.function.name,
+                                arguments=tc.function.arguments,
+                            ),
+                        )
                         for tc in tool_calls
                     ],
-                }
+                )
             )
             assert self._workspace is not None
             for tc in tool_calls:
@@ -105,7 +132,11 @@ class Agent:
                     name, json.loads(tc.function.arguments)
                 )
                 messages.append(
-                    {"role": "tool", "tool_call_id": tc.id, "content": result}
+                    ChatCompletionToolMessage(
+                        role="tool",
+                        tool_call_id=tc.id,
+                        content=result,
+                    )
                 )
 
         raise RuntimeError(
@@ -131,9 +162,11 @@ class Agent:
     ) -> AsyncIterator[str]:
         from litellm import acompletion
 
-        messages: list[Any] = [
-            {"role": "system", "content": _build_system(self.config, self._workspace)},
-            {"role": "user", "content": user_prompt},
+        messages: list[AllMessageValues] = [
+            ChatCompletionSystemMessage(
+                role="system", content=_build_system(self.config, self._workspace)
+            ),
+            ChatCompletionUserMessage(role="user", content=user_prompt),
         ]
         tools = self._workspace.get_tools() if self._workspace else None
 
@@ -148,36 +181,40 @@ class Agent:
 
             response = cast("CustomStreamWrapper", await acompletion(**kwargs))
             collected_content: list[str] = []
-            collected_tool_calls: dict[int, dict[str, Any]] = {}
+            collected_tool_calls: dict[int, ChatCompletionAssistantToolCall] = {}
 
             async for chunk in response:
                 delta = chunk.choices[0].delta
                 if delta.content is not None:
                     collected_content.append(delta.content)
                     yield delta.content
-                tool_calls = getattr(delta, "tool_calls", None)
-                if tool_calls:
-                    for tc_delta in tool_calls:
+                tc_deltas = getattr(delta, "tool_calls", None)
+                if tc_deltas:
+                    for tc_delta in tc_deltas:
                         _accumulate_tool_call_delta(tc_delta, collected_tool_calls)
 
             if not collected_tool_calls:
                 return
 
             messages.append(
-                {
-                    "role": "assistant",
-                    "content": "".join(collected_content) or None,
-                    "tool_calls": list(collected_tool_calls.values()),
-                }
+                ChatCompletionAssistantMessage(
+                    role="assistant",
+                    content="".join(collected_content) or None,
+                    tool_calls=list(collected_tool_calls.values()),
+                )
             )
             assert self._workspace is not None
             for tc in collected_tool_calls.values():
                 result = await self._workspace.execute_tool(
-                    tc["function"]["name"],
-                    json.loads(tc["function"]["arguments"]),
+                    tc["function"].get("name") or "",
+                    json.loads(tc["function"].get("arguments") or "{}"),
                 )
                 messages.append(
-                    {"role": "tool", "tool_call_id": tc["id"], "content": result}
+                    ChatCompletionToolMessage(
+                        role="tool",
+                        tool_call_id=tc["id"] or "",
+                        content=result,
+                    )
                 )
 
         raise RuntimeError(

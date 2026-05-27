@@ -5,6 +5,11 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from litellm.types.llms.openai import (
+    ChatCompletionToolParam,
+    ChatCompletionToolParamFunctionChunk,
+)
+
 from alpha_core.contracts.workspace.file_system_contract import FileSystemContract
 from alpha_core.contracts.workspace.sandbox_contract import SandboxContract
 from alpha_core.domain.workspace.file_systems.local_file_system import LocalFileSystem
@@ -113,22 +118,24 @@ def _dispatch_fs_tool(name: str, args: dict, fs: FileSystemContract) -> object:
 # ---------------------------------------------------------------------------
 
 
-def _tool(name: str, description: str, properties: dict, required: list[str]) -> dict:
-    return {
-        "type": "function",
-        "function": {
-            "name": name,
-            "description": description,
-            "parameters": {
+def _tool(
+    name: str, description: str, properties: dict, required: list[str]
+) -> ChatCompletionToolParam:
+    return ChatCompletionToolParam(
+        type="function",
+        function=ChatCompletionToolParamFunctionChunk(
+            name=name,
+            description=description,
+            parameters={
                 "type": "object",
                 "properties": properties,
                 "required": required,
             },
-        },
-    }
+        ),
+    )
 
 
-_FS_TOOLS: list[dict] = [
+_FS_TOOLS: list[ChatCompletionToolParam] = [
     _tool(
         "read_file",
         "Read the full text content of a file inside the workspace.",
@@ -228,7 +235,7 @@ _FS_TOOLS: list[dict] = [
     ),
 ]
 
-_SANDBOX_TOOLS: list[dict] = [
+_SANDBOX_TOOLS: list[ChatCompletionToolParam] = [
     _tool(
         "execute_command",
         (
@@ -271,7 +278,7 @@ _SANDBOX_TOOLS: list[dict] = [
     ),
 ]
 
-_SKILL_TOOLS: list[dict] = [
+_SKILL_TOOLS: list[ChatCompletionToolParam] = [
     _tool(
         "read_skill_file",
         "Read a non-instructions file that belongs to a named skill.",
@@ -354,8 +361,8 @@ class Workspace:
         if self._sandbox is not None:
             await self._sandbox.teardown()
 
-    def get_tools(self) -> list[dict]:
-        tools: list[dict] = []
+    def get_tools(self) -> list[ChatCompletionToolParam]:
+        tools: list[ChatCompletionToolParam] = []
         if self._fs is not None:
             tools.extend(_FS_TOOLS)
         if self._sandbox is not None:

@@ -12,23 +12,49 @@ from alpha_core.schemas.sandbox_config import LocalSandboxConfig
 from alpha_core.schemas.workspace_config import WorkspaceConfig
 
 from basic_app.agents import AGENTS
+from basic_app.doc_gen import DOC_GEN_WORKFLOW, create_doc_gen_agents
 from basic_app.evals import print_eval_results, run_parser_evals
 from basic_app.workflows import REVIEW_WORKFLOW
 
 ENV_FILE = Path(__file__).parents[2] / ".env"
 WORKSPACE_DIR = Path(__file__).parents[2] / "test_workspace"
+_SOURCE_DIR = Path(__file__).parent
+
+APP_CONFIG = AppConfig(
+    name="basic-app",
+    env_file=ENV_FILE,
+    agents={
+        **AGENTS,
+        **create_doc_gen_agents(_SOURCE_DIR),
+        "coder": AgentConfig(
+            name="Coder",
+            system_prompt=(
+                "You are a Python developer working inside a sandboxed workspace. "
+                "Use the available tools to write files, run commands, and verify results. "
+                "Always check command output before reporting success."
+            ),
+            model="gemini/gemini-2.0-flash",
+            workspace=WorkspaceConfig(
+                name="sandbox",
+                filesystem=LocalFilesystemConfig(base_path=WORKSPACE_DIR),
+                sandbox=LocalSandboxConfig(
+                    working_directory=WORKSPACE_DIR,
+                    timeout=15,
+                ),
+            ),
+        ),
+    },
+    workflows={
+        "review": REVIEW_WORKFLOW,
+        "doc_gen": DOC_GEN_WORKFLOW,
+    },
+)
+
+APP = AlphaApp(config=APP_CONFIG)
 
 
 async def run_review() -> None:
-    config = AppConfig(
-        name="code-reviewer",
-        env_file=ENV_FILE,
-        agents=AGENTS,
-        workflows={"review": REVIEW_WORKFLOW},
-    )
-
-    app = AlphaApp(config=config)
-    result = await app.execute_workflow(
+    result = await APP.execute_workflow(
         "review",
         {
             "language": "Python",
@@ -52,72 +78,29 @@ async def run_review() -> None:
         print(f"  • {rec}")
 
 
-async def run_workspace() -> None:
-    WORKSPACE_DIR.mkdir(exist_ok=True)
-    print(f"Workspace directory: {WORKSPACE_DIR}\n")
+async def run_evals_demo() -> None:
+    results = await run_parser_evals(APP.agents["parser"], APP.context)
+    print_eval_results(results)
 
-    config = AppConfig(
-        name="workspace-demo",
-        env_file=ENV_FILE,
-        agents={
-            "coder": AgentConfig(
-                name="Coder",
-                system_prompt=(
-                    "You are a Python developer working inside a sandboxed workspace. "
-                    "Use the available tools to write files, run commands, and verify results. "
-                    "Always check command output before reporting success."
-                ),
-                model="gemini/gemini-2.0-flash",
-            )
-        },
-        workspace=WorkspaceConfig(
-            name="sandbox",
-            filesystem=LocalFilesystemConfig(base_path=WORKSPACE_DIR),
-            sandbox=LocalSandboxConfig(
-                working_directory=WORKSPACE_DIR,
-                timeout=15,
-            ),
-        ),
-    )
 
-    async with AlphaApp(config=config) as app:
-        result = await app.agents["coder"].generate_async(
-            dedent("""
-                Do the following steps in order:
-                1. Write a file called `fib.py` that prints the first 10 Fibonacci numbers.
-                2. Run `python fib.py` and capture the output.
-                3. Reply with the exact output the script produced.
-            """),
-            app.context,
+async def run_doc_gen() -> None:
+    async with APP:
+        result = await APP.execute_workflow(
+            "doc_gen",
+            {"file_path": "schemas.py"},
         )
 
-    print("=== Agent result ===")
-    print(result)
-    print(f"\n=== Files in {WORKSPACE_DIR} ===")
-    for f in sorted(WORKSPACE_DIR.iterdir()):
-        print(f"\n--- {f.name} ---")
-        print(f.read_text())
-
-
-async def run_evals_demo() -> None:
-    config = AppConfig(
-        name="eval-demo",
-        env_file=ENV_FILE,
-        agents={"parser": AGENTS["parser"]},
-    )
-
-    app = AlphaApp(config=config)
-    results = await run_parser_evals(app.agents["parser"], app.context)
-    print_eval_results(results)
+    print(f"\n=== Documentation for {result['file_path']} ===\n")
+    print(result["documentation"])
 
 
 def run() -> None:
     asyncio.run(run_review())
 
 
-def run_workspace_demo() -> None:
-    asyncio.run(run_workspace())
-
-
 def run_eval_demo() -> None:
     asyncio.run(run_evals_demo())
+
+
+def run_doc_gen_demo() -> None:
+    asyncio.run(run_doc_gen())
