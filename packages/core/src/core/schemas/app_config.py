@@ -1,9 +1,11 @@
 from pathlib import Path
 
+from pydantic import BaseModel, Field
+
 from core.schemas.agent_config import AgentConfig
 from core.schemas.workflow_config import WorkflowConfig
+from core.schemas.workspace_config import WorkspaceConfig
 from core.types.app_id import AppId
-from pydantic import BaseModel, Field
 
 
 class AppConfig(BaseModel):
@@ -27,6 +29,12 @@ class AppConfig(BaseModel):
     workflows: dict[AppId, WorkflowConfig] = Field(
         default_factory=dict,
         description="A dictionary of workflows that the AlphaApp will execute",
+    )
+    workspace: WorkspaceConfig | None = Field(
+        default=None,
+        description=(
+            "Global workspace inherited by all agents that do not declare their own."
+        ),
     )
 
 

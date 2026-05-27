@@ -7,8 +7,8 @@ from core.schemas.app_config import AppConfig
 from core.types.app_id import AppId
 
 if TYPE_CHECKING:
-    from core.agent import Agent
-    from core.workflow import Workflow
+    from core.domain.agent.agent import Agent
+    from core.domain.workflow.workflow import Workflow
 
 
 @dataclass

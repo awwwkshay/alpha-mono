@@ -8,12 +8,13 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.14"
-dependencies = ["core"]
+dependencies = ["alpha-core"]
 
 [tool.uv.sources]
-core = { workspace = true }
+alpha-core = { workspace = true }
 
 [project.scripts]
 basic-app = "basic_app.main:run"
+workspace-demo = "basic_app.main:run_workspace_demo"
 
 
