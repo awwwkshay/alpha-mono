@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Literal
 
-from core.contracts.workspace.sandbox_contract import SandboxContract
+from alpha_core.contracts.workspace.sandbox_contract import SandboxContract
 
 
 @dataclass
@@ -53,7 +53,7 @@ class LocalSandbox(SandboxContract):
         if self._isolation == "seatbelt" and sys.platform == "darwin":
             policy = "(version 1)(allow default)(deny file-write*)"
             return f"sandbox-exec -p '{policy}' sh -c {_shell_quote(command)}"
-        if self._isolation == "bwrap" and sys.platform.startswith("linux"):
+        if self._isolation == "bwrap" and sys.platform.startswith("linux"):  # type: ignore[unreachable]
             return (
                 "bwrap --ro-bind / / --tmpfs /tmp --unshare-all "
                 f"-- sh -c {_shell_quote(command)}"

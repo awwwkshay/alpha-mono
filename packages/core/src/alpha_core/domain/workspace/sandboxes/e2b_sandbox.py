@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from core.contracts.workspace.sandbox_contract import SandboxContract
+from alpha_core.contracts.workspace.sandbox_contract import SandboxContract
 
 
 class E2BSandbox(SandboxContract):

@@ -4,14 +4,14 @@ import json
 from collections.abc import AsyncIterator
 from typing import TYPE_CHECKING, Any, cast
 
-from core.schemas.agent_config import AgentConfig
-from core.schemas.app_context import AppContext
+from alpha_core.schemas.agent_config import AgentConfig
+from alpha_core.schemas.app_context import AppContext
 
 if TYPE_CHECKING:
     from litellm.litellm_core_utils.streaming_handler import CustomStreamWrapper
     from litellm.types.utils import ModelResponse
 
-    from core.domain.workspace.workspace import Workspace
+    from alpha_core.domain.workspace.workspace import Workspace
 
 _MAX_TOOL_ITERATIONS = 20
 
@@ -54,7 +54,7 @@ class Agent:
         self.config = config
         self._workspace = workspace
 
-    async def generate_async(self, user_prompt: str, context: AppContext) -> str:
+    async def generate_async(self, user_prompt: str, _context: AppContext) -> str:
         from litellm import acompletion
 
         messages: list[Any] = [
@@ -111,7 +111,7 @@ class Agent:
         )
 
     async def stream_async(
-        self, user_prompt: str, context: AppContext
+        self, user_prompt: str, _context: AppContext
     ) -> AsyncIterator[str]:
         from litellm import acompletion
 

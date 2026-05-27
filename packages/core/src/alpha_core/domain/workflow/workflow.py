@@ -4,8 +4,8 @@ from typing import Callable, Generic, TypeVar
 
 from pydantic import BaseModel, ValidationError
 
-from core.schemas.app_context import AppContext
-from core.schemas.workflow_config import (
+from alpha_core.schemas.app_context import AppContext
+from alpha_core.schemas.workflow_config import (
     ConditionalWorkflowStepConfig,
     ParallelWorkflowStepConfig,
     WorkflowConfig,

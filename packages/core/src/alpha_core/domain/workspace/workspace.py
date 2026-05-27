@@ -5,17 +5,20 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from core.contracts.workspace.file_system_contract import FileSystemContract
-from core.contracts.workspace.sandbox_contract import SandboxContract
-from core.domain.workspace.file_systems.local_file_system import LocalFileSystem
-from core.domain.workspace.file_systems.s3_file_system import S3FileSystem
-from core.domain.workspace.sandboxes.e2b_sandbox import E2BSandbox
-from core.domain.workspace.sandboxes.local_sandbox import LocalSandbox
-from core.schemas.filesystem_config import LocalFilesystemConfig, S3FilesystemConfig
-from core.schemas.sandbox_config import E2BSandboxConfig, LocalSandboxConfig
+from alpha_core.contracts.workspace.file_system_contract import FileSystemContract
+from alpha_core.contracts.workspace.sandbox_contract import SandboxContract
+from alpha_core.domain.workspace.file_systems.local_file_system import LocalFileSystem
+from alpha_core.domain.workspace.file_systems.s3_file_system import S3FileSystem
+from alpha_core.domain.workspace.sandboxes.e2b_sandbox import E2BSandbox
+from alpha_core.domain.workspace.sandboxes.local_sandbox import LocalSandbox
+from alpha_core.schemas.filesystem_config import (
+    LocalFilesystemConfig,
+    S3FilesystemConfig,
+)
+from alpha_core.schemas.sandbox_config import E2BSandboxConfig, LocalSandboxConfig
 
 if TYPE_CHECKING:
-    from core.schemas.workspace_config import WorkspaceConfig
+    from alpha_core.schemas.workspace_config import WorkspaceConfig
 
 
 # ---------------------------------------------------------------------------

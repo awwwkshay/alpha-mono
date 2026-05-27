@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from core.contracts.workspace.file_system_contract import FileSystemContract
+from alpha_core.contracts.workspace.file_system_contract import FileSystemContract
 
 
 class S3FileSystem(FileSystemContract):

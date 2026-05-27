@@ -4,8 +4,8 @@ from pathlib import Path
 
 from pydantic import BaseModel, Field
 
-from core.schemas.filesystem_config import FilesystemConfig
-from core.schemas.sandbox_config import SandboxConfig
+from alpha_core.schemas.filesystem_config import FilesystemConfig
+from alpha_core.schemas.sandbox_config import SandboxConfig
 
 
 class SkillsConfig(BaseModel):

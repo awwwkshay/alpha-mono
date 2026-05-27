@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Callable, Generic, TypeVar
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
 if TYPE_CHECKING:
-    from core.schemas.app_context import AppContext
+    from alpha_core.schemas.app_context import AppContext
 
 
 class WorkflowConfigError(Exception):
@@ -66,7 +66,7 @@ class WorkflowStepConfig(BaseModel, Generic[InputT, OutputT]):
         execute: Callable[[InputT, AppContext], Awaitable[OutputT]],
         description: str | None = None,
     ) -> WorkflowStepConfig[InputT, OutputT]:
-        from core.schemas.app_context import AppContext  # noqa: F401
+        from alpha_core.schemas.app_context import AppContext  # noqa: F401
 
         cls.model_rebuild()
         return cls(
@@ -162,7 +162,7 @@ class ParallelWorkflowStepConfig(BaseModel, Generic[InputT, OutputT]):
         branches: dict[str, WorkflowStepConfig],
         description: str | None = None,
     ) -> ParallelWorkflowStepConfig[InputT, OutputT]:
-        from core.schemas.app_context import AppContext  # noqa: F401
+        from alpha_core.schemas.app_context import AppContext  # noqa: F401
 
         WorkflowStepConfig.model_rebuild()
         cls.model_rebuild()
@@ -227,7 +227,7 @@ class ConditionalWorkflowStepConfig(BaseModel, Generic[InputT, OutputT]):
         branches: dict[str, WorkflowStepConfig],
         description: str | None = None,
     ) -> ConditionalWorkflowStepConfig[InputT, OutputT]:
-        from core.schemas.app_context import AppContext  # noqa: F401
+        from alpha_core.schemas.app_context import AppContext  # noqa: F401
 
         WorkflowStepConfig.model_rebuild()
         cls.model_rebuild()
@@ -303,7 +303,7 @@ class WorkflowConfig(BaseModel, Generic[InputT, OutputT]):
         steps: dict[str, AnyStepConfig],
         description: str | None = None,
     ) -> WorkflowConfig[InputT, OutputT]:
-        from core.schemas.app_context import (
+        from alpha_core.schemas.app_context import (
             AppContext,  # noqa: F401  # pyright: ignore[reportUnusedImport]
         )
 

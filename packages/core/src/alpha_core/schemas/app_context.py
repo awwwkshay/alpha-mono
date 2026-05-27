@@ -3,12 +3,12 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
-from core.schemas.app_config import AppConfig
-from core.types.app_id import AppId
+from alpha_core.schemas.app_config import AppConfig
+from alpha_core.types.app_id import AppId
 
 if TYPE_CHECKING:
-    from core.domain.agent.agent import Agent
-    from core.domain.workflow.workflow import Workflow
+    from alpha_core.domain.agent.agent import Agent
+    from alpha_core.domain.workflow.workflow import Workflow
 
 
 @dataclass

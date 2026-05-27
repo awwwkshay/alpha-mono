@@ -2,19 +2,19 @@ import asyncio
 from pathlib import Path
 from textwrap import dedent
 
-from core.domain.app.app import AlphaApp
-from core.schemas.agent_config import AgentConfig
-from core.schemas.app_config import AppConfig
-from core.schemas.app_context import AppContext
-from core.schemas.filesystem_config import LocalFilesystemConfig
-from core.schemas.sandbox_config import LocalSandboxConfig
-from core.schemas.workflow_config import (
+from alpha_core.domain.app.app import AlphaApp
+from alpha_core.schemas.agent_config import AgentConfig
+from alpha_core.schemas.app_config import AppConfig
+from alpha_core.schemas.app_context import AppContext
+from alpha_core.schemas.filesystem_config import LocalFilesystemConfig
+from alpha_core.schemas.sandbox_config import LocalSandboxConfig
+from alpha_core.schemas.workflow_config import (
     ConditionalWorkflowStepConfig,
     ParallelWorkflowStepConfig,
     WorkflowConfig,
     WorkflowStepConfig,
 )
-from core.schemas.workspace_config import WorkspaceConfig
+from alpha_core.schemas.workspace_config import WorkspaceConfig
 from pydantic import BaseModel
 
 ENV_FILE = Path(__file__).parents[2] / ".env"
@@ -178,7 +178,7 @@ async def style_review(input: CodeSummary, context: AppContext) -> StyleOut:
 # ---------------------------------------------------------------------------
 
 
-def route_by_severity(input: ReviewDraft, context: AppContext) -> str:
+def route_by_severity(input: ReviewDraft, _context: AppContext) -> str:
     return "urgent" if input.severity == "high" else "standard"
 
 

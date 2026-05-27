@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from dotenv import load_dotenv
 
-from core.domain.agent.agent import Agent
-from core.schemas.app_config import AppConfig
-from core.schemas.app_context import AppContext
-from core.types.app_id import AppId
-from core.domain.workflow.workflow import Workflow
-from core.domain.workspace.workspace import Workspace
+from alpha_core.domain.agent.agent import Agent
+from alpha_core.domain.workflow.workflow import Workflow
+from alpha_core.domain.workspace.workspace import Workspace
+from alpha_core.schemas.app_config import AppConfig
+from alpha_core.schemas.app_context import AppContext
+from alpha_core.types.app_id import AppId
 
 
 class AlphaApp:

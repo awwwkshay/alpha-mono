@@ -2,10 +2,10 @@ from pathlib import Path
 
 from pydantic import BaseModel, Field
 
-from core.schemas.agent_config import AgentConfig
-from core.schemas.workflow_config import WorkflowConfig
-from core.schemas.workspace_config import WorkspaceConfig
-from core.types.app_id import AppId
+from alpha_core.schemas.agent_config import AgentConfig
+from alpha_core.schemas.workflow_config import WorkflowConfig
+from alpha_core.schemas.workspace_config import WorkspaceConfig
+from alpha_core.types.app_id import AppId
 
 
 class AppConfig(BaseModel):

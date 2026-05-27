@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
-from core.schemas.workspace_config import WorkspaceConfig
+from alpha_core.schemas.workspace_config import WorkspaceConfig
 
 
 class AgentConfig(BaseModel):
