@@ -15,6 +15,9 @@ from litellm.types.llms.openai import (
     ChatCompletionUserMessage,
 )
 
+from opentelemetry import trace
+
+from alpha_core.log import logger
 from alpha_core.domain.evals.runner import run_scorers
 from alpha_core.domain.evals.scorer import ScorerResult
 from alpha_core.schemas.agent_config import AgentConfig
@@ -128,6 +131,7 @@ class Agent:
             assert self._workspace is not None
             for tc in tool_calls:
                 name: str = tc.function.name or ""
+                logger.debug(f"Agent '{self.config.name}' calling tool '{name}'")
                 result = await self._workspace.execute_tool(
                     name, json.loads(tc.function.arguments)
                 )
@@ -145,29 +149,49 @@ class Agent:
         )
 
     async def generate_async(self, user_prompt: str, _context: AppContext) -> str:
-        content = await self._generate_raw(user_prompt)
-        if self.config.scorers:
-            asyncio.create_task(run_scorers(self.config.scorers, user_prompt, content))
-        return content
+        tracer = trace.get_tracer(__name__)
+        logger.info(f"Agent '{self.config.name}' generating response")
+        with tracer.start_as_current_span(
+            f"Agent.generate_async/{self.config.name}",
+            attributes={"agent_name": self.config.name, "model": self.config.model},
+        ):
+            content = await self._generate_raw(user_prompt)
+            if self.config.scorers:
+                asyncio.create_task(
+                    run_scorers(self.config.scorers, user_prompt, content)
+                )
+            return content
 
     async def generate_with_evals_async(
         self, user_prompt: str, _context: AppContext
     ) -> tuple[str, dict[str, ScorerResult]]:
-        content = await self._generate_raw(user_prompt)
-        scores = await run_scorers(self.config.scorers, user_prompt, content)
-        return content, scores
+        tracer = trace.get_tracer(__name__)
+        logger.info(f"Agent '{self.config.name}' generating response with evals")
+        with tracer.start_as_current_span(
+            f"Agent.generate_with_evals_async/{self.config.name}",
+            attributes={"agent_name": self.config.name, "model": self.config.model},
+        ):
+            content = await self._generate_raw(user_prompt)
+            scores = await run_scorers(self.config.scorers, user_prompt, content)
+            return content, scores
 
     async def stream_async(
         self, user_prompt: str, _context: AppContext
     ) -> AsyncIterator[str]:
-        from litellm import acompletion
+        tracer = trace.get_tracer(__name__)
+        logger.info(f"Agent '{self.config.name}' streaming response")
+        with tracer.start_as_current_span(
+            f"Agent.stream_async/{self.config.name}",
+            attributes={"agent_name": self.config.name, "model": self.config.model},
+        ):
+            from litellm import acompletion
 
-        messages: list[AllMessageValues] = [
-            ChatCompletionSystemMessage(
-                role="system", content=_build_system(self.config, self._workspace)
-            ),
-            ChatCompletionUserMessage(role="user", content=user_prompt),
-        ]
+            messages: list[AllMessageValues] = [
+                ChatCompletionSystemMessage(
+                    role="system", content=_build_system(self.config, self._workspace)
+                ),
+                ChatCompletionUserMessage(role="user", content=user_prompt),
+            ]
         tools = self._workspace.get_tools() if self._workspace else None
 
         for _ in range(_MAX_TOOL_ITERATIONS):
@@ -205,8 +229,10 @@ class Agent:
             )
             assert self._workspace is not None
             for tc in collected_tool_calls.values():
+                name: str = tc["function"].get("name") or ""
+                logger.debug(f"Agent '{self.config.name}' calling tool '{name}'")
                 result = await self._workspace.execute_tool(
-                    tc["function"].get("name") or "",
+                    name,
                     json.loads(tc["function"].get("arguments") or "{}"),
                 )
                 messages.append(

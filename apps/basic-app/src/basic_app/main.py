@@ -1,8 +1,15 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from pathlib import Path
 from textwrap import dedent
+
+from opentelemetry import trace
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
 from alpha_core.domain.app.app import AlphaApp
 from alpha_core.schemas.agent_config import AgentConfig
@@ -15,6 +22,16 @@ from basic_app.agents import AGENTS
 from basic_app.doc_gen import DOC_GEN_WORKFLOW, create_doc_gen_agents
 from basic_app.evals import print_eval_results, run_parser_evals
 from basic_app.workflows import REVIEW_WORKFLOW
+
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+
+resource = Resource(attributes={"service.name": "alpha-basic-app"})
+provider = TracerProvider(resource=resource)
+otlp_exporter = OTLPSpanExporter(endpoint="http://localhost:4317", insecure=True)
+provider.add_span_processor(BatchSpanProcessor(otlp_exporter))
+trace.set_tracer_provider(provider)
 
 ENV_FILE = Path(__file__).parents[2] / ".env"
 WORKSPACE_DIR = Path(__file__).parents[2] / "test_workspace"

@@ -10,6 +10,9 @@ from litellm.types.llms.openai import (
     ChatCompletionToolParamFunctionChunk,
 )
 from pydantic import BaseModel
+from opentelemetry import trace
+
+from alpha_core.log import logger
 
 from alpha_core.contracts.workspace.file_system_contract import FileSystemContract
 from alpha_core.contracts.workspace.sandbox_contract import SandboxContract
@@ -373,13 +376,19 @@ class Workspace:
         return tools
 
     async def execute_tool(self, name: str, arguments: dict) -> str:
-        try:
-            result: Any = await self._dispatch(name, arguments)
-            if isinstance(result, BaseModel):
-                result = result.model_dump()
-        except Exception as exc:
-            result = {"error": str(exc)}
-        return json.dumps(result)
+        tracer = trace.get_tracer(__name__)
+        logger.debug(f"Workspace executing tool '{name}'")
+        with tracer.start_as_current_span(
+            f"Workspace.execute_tool/{name}",
+            attributes={"tool_name": name},
+        ):
+            try:
+                result: Any = await self._dispatch(name, arguments)
+                if isinstance(result, BaseModel):
+                    result = result.model_dump()
+            except Exception as exc:
+                result = {"error": str(exc)}
+            return json.dumps(result)
 
     async def _dispatch(self, name: str, args: dict) -> object:
         if self._fs is not None:

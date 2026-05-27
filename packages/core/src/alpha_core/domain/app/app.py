@@ -2,10 +2,12 @@ from __future__ import annotations
 
 from typing import Any
 from dotenv import load_dotenv
+from opentelemetry import trace
 
 from alpha_core.domain.agent.agent import Agent
 from alpha_core.domain.workflow.workflow import Workflow
 from alpha_core.domain.workspace.workspace import Workspace
+from alpha_core.log import logger
 from alpha_core.schemas.app_config import AppConfig
 from alpha_core.schemas.app_context import AppContext
 from alpha_core.types.app_id import AppId
@@ -18,6 +20,13 @@ class AlphaApp:
     workflows: dict[AppId, Workflow]
 
     def __init__(self, *, config: AppConfig) -> None:
+        import logging
+
+        if config.debug:
+            logger.setLevel(logging.DEBUG)
+        else:
+            logger.setLevel(logging.INFO)
+
         load_dotenv(dotenv_path=config.env_file)
         self.config = config
 
@@ -53,12 +62,18 @@ class AlphaApp:
         )
 
     async def setup(self) -> None:
+        logger.debug(
+            f"Setting up app '{self.config.name}' (workspaces={len(self._workspaces)})"
+        )
         for workspace in self._workspaces:
             await workspace.setup()
+        logger.info(f"App '{self.config.name}' setup complete")
 
     async def teardown(self) -> None:
+        logger.debug(f"Tearing down app '{self.config.name}'")
         for workspace in self._workspaces:
             await workspace.teardown()
+        logger.info(f"App '{self.config.name}' teardown complete")
 
     async def __aenter__(self) -> AlphaApp:
         await self.setup()
@@ -68,7 +83,15 @@ class AlphaApp:
         await self.teardown()
 
     async def execute_workflow(self, workflow_id: AppId, input_data: Any) -> Any:
-        return await self.workflows[workflow_id].execute(input_data, self.context)
+        tracer = trace.get_tracer(__name__)
+        logger.info(f"Executing workflow '{workflow_id}' in app '{self.config.name}'")
+        with tracer.start_as_current_span(
+            f"AlphaApp.execute_workflow/{workflow_id}",
+            attributes={"workflow_id": workflow_id},
+        ):
+            result = await self.workflows[workflow_id].execute(input_data, self.context)
+            logger.info(f"Completed workflow '{workflow_id}'")
+            return result
 
 
 __all__ = ["AlphaApp"]

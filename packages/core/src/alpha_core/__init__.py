@@ -24,6 +24,7 @@ from alpha_core.domain.workspace.file_systems.s3_file_system import S3FileSystem
 from alpha_core.domain.workspace.sandboxes.e2b_sandbox import E2BSandbox
 from alpha_core.domain.workspace.sandboxes.local_sandbox import LocalSandbox
 from alpha_core.domain.workspace.workspace import Skill, Workspace
+from alpha_core.log import logger
 from alpha_core.schemas.agent_config import AgentConfig
 from alpha_core.schemas.app_config import AppConfig
 from alpha_core.schemas.app_context import AppContext
@@ -84,6 +85,7 @@ __all__ = [
     "WorkflowConfig",
     "WorkflowStepConfig",
     "WorkspaceConfig",
+    "logger",
     "run_evals",
     "run_scorers",
 ]

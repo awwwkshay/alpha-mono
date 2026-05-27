@@ -5,7 +5,7 @@ description = "Core components and utilities for the Alpha ecosystem."
 readme = "README.md"
 authors = [{ name = "Akshay Priyadarshi", email = "akshayp1904@outlook.com" }]
 requires-python = ">=3.14"
-dependencies = ["litellm>=1.86.0", "pydantic>=2.13.4", "python-dotenv>=1.2.2"]
+dependencies = ["litellm>=1.86.0", "opentelemetry-api>=1.24.0", "pydantic>=2.13.4", "python-dotenv>=1.2.2"]
 
 [tool.uv.build-backend]
 module-name = "alpha_core"

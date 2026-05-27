@@ -36,6 +36,10 @@ class AppConfig(BaseModel):
             "Global workspace inherited by all agents that do not declare their own."
         ),
     )
+    debug: bool = Field(
+        default=False,
+        description="Whether to run the application in debug mode",
+    )
 
 
 __all__ = ["AppConfig"]
