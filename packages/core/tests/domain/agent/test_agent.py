@@ -4,6 +4,7 @@ import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from pydantic import BaseModel
 
 from alpha_core.domain.agent.agent import (
     Agent,
@@ -354,6 +355,54 @@ async def test_stream_async_yields_content():
     with patch("litellm.acompletion", AsyncMock(return_value=chunks)):
         parts = [chunk async for chunk in agent.stream_async("Hi", _make_context())]
     assert parts == ["Hello", " world"]
+
+
+# ---------------------------------------------------------------------------
+# Agent.generate_structured_async
+# ---------------------------------------------------------------------------
+
+
+class _Point(BaseModel):
+    x: int
+    y: int
+
+
+async def test_generate_structured_async_returns_parsed_model():
+    agent = _make_agent()
+    with patch(
+        "litellm.acompletion",
+        AsyncMock(return_value=_make_response('{"x": 1, "y": 2}')),
+    ):
+        result = await agent.generate_structured_async(
+            "Give me a point", _make_context(), _Point
+        )
+    assert isinstance(result, _Point)
+    assert result.x == 1
+    assert result.y == 2
+
+
+async def test_generate_structured_async_no_content_raises():
+    agent = _make_agent()
+    with patch(
+        "litellm.acompletion",
+        AsyncMock(return_value=_make_response(None)),
+    ):
+        with pytest.raises(ValueError, match="Model returned no content"):
+            await agent.generate_structured_async(
+                "Give me a point", _make_context(), _Point
+            )
+
+
+async def test_generate_structured_async_invalid_json_raises():
+    agent = _make_agent()
+    with patch(
+        "litellm.acompletion",
+        AsyncMock(return_value=_make_response("not json")),
+    ):
+        with pytest.raises(Exception):
+            await agent.generate_structured_async(
+                "Give me a point", _make_context(), _Point
+            )
 
 
 async def test_stream_async_max_iterations_raises():

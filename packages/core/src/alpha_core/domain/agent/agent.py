@@ -3,7 +3,9 @@ from __future__ import annotations
 import asyncio
 import json
 from collections.abc import AsyncIterator
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, TypeVar, cast
+
+from pydantic import BaseModel
 
 from litellm.types.llms.openai import (
     AllMessageValues,
@@ -30,6 +32,7 @@ if TYPE_CHECKING:
     from alpha_core.domain.workspace.workspace import Workspace
 
 _MAX_TOOL_ITERATIONS = 20
+_T = TypeVar("_T", bound=BaseModel)
 
 
 def _build_system(config: AgentConfig, workspace: Workspace | None) -> str:
@@ -174,6 +177,36 @@ class Agent:
             content = await self._generate_raw(user_prompt)
             scores = await run_scorers(self.config.scorers, user_prompt, content)
             return content, scores
+
+    async def generate_structured_async(
+        self, user_prompt: str, _context: AppContext, response_model: type[_T]
+    ) -> _T:
+        from litellm import acompletion
+
+        tracer = trace.get_tracer(__name__)
+        logger.info(f"Agent '{self.config.name}' generating structured response")
+        with tracer.start_as_current_span(
+            f"Agent.generate_structured_async/{self.config.name}",
+            attributes={"agent_name": self.config.name, "model": self.config.model},
+        ):
+            messages: list[AllMessageValues] = [
+                ChatCompletionSystemMessage(
+                    role="system", content=_build_system(self.config, self._workspace)
+                ),
+                ChatCompletionUserMessage(role="user", content=user_prompt),
+            ]
+            response = cast(
+                "ModelResponse",
+                await acompletion(
+                    model=self.config.model,
+                    messages=messages,
+                    response_format=response_model,
+                ),
+            )
+            content = response.choices[0].message.content
+            if not content:
+                raise ValueError("Model returned no content")
+            return response_model.model_validate_json(content)
 
     async def stream_async(
         self, user_prompt: str, _context: AppContext

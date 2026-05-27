@@ -5,18 +5,17 @@ import logging
 from pathlib import Path
 from textwrap import dedent
 
-from opentelemetry import trace
-from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
-from opentelemetry.sdk.resources import Resource
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor
-
 from alpha_core.domain.app.app import AlphaApp
 from alpha_core.schemas.agent_config import AgentConfig
 from alpha_core.schemas.app_config import AppConfig
 from alpha_core.schemas.filesystem_config import LocalFilesystemConfig
 from alpha_core.schemas.sandbox_config import LocalSandboxConfig
 from alpha_core.schemas.workspace_config import WorkspaceConfig
+from opentelemetry import trace
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
 from basic_app.agents import AGENTS
 from basic_app.doc_gen import DOC_GEN_WORKFLOW, create_doc_gen_agents
@@ -65,6 +64,7 @@ APP_CONFIG = AppConfig(
         "review": REVIEW_WORKFLOW,
         "doc_gen": DOC_GEN_WORKFLOW,
     },
+    debug=True,
 )
 
 APP = AlphaApp(config=APP_CONFIG)

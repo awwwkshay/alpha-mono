@@ -87,12 +87,13 @@ Input is validated against `input_schema` before the function is called. Output 
 
 ## Agents
 
-`Agent` wraps a litellm model call. It supports two modes:
+`Agent` wraps a litellm model call. It supports three modes:
 
 - `generate_async` — returns the full response as a string.
+- `generate_structured_async` — returns a parsed Pydantic model instance (see below).
 - `stream_async` — yields content tokens as an async iterator.
 
-Both modes implement the same **tool-use loop**:
+`generate_async` and `stream_async` implement the same **tool-use loop**:
 
 ```text
 while iterations < MAX_TOOL_ITERATIONS:
@@ -105,6 +106,18 @@ raise RuntimeError  # iteration limit exceeded
 ```
 
 The `context: AppContext` parameter is available for future use (e.g. accessing other agents or workflows from within a step).
+
+### Structured output
+
+`generate_structured_async(user_prompt, context, response_model)` makes a single LiteLLM call with `response_format=response_model` and returns a parsed instance of the given Pydantic model. No tool-call loop runs — this is a direct call intended for steps that need a typed response shape. The same agent can be called with different `response_model` types on each invocation:
+
+```python
+class Summary(BaseModel):
+    title: str
+    points: list[str]
+
+result: Summary = await agent.generate_structured_async(prompt, context, Summary)
+```
 
 ### Tool injection
 
@@ -219,7 +232,5 @@ packages/core/src/alpha_core/
 └── types/
     └── app_id.py
 ```
-
-Last updated: 2026-05-27
 
 Last updated: 2026-05-27
