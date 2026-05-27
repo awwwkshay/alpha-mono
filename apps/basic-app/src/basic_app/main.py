@@ -69,12 +69,12 @@ async def run_review() -> None:
         },
     )
 
-    print(f"\nVerdict: {result['verdict']}")
+    print(f"\nVerdict: {result.verdict}")
     print("\nPriority Issues:")
-    for issue in result["priority_issues"]:
+    for issue in result.priority_issues:
         print(f"  • {issue}")
     print("\nRecommendations:")
-    for rec in result["recommendations"]:
+    for rec in result.recommendations:
         print(f"  • {rec}")
 
 
@@ -90,8 +90,8 @@ async def run_doc_gen() -> None:
             {"file_path": "schemas.py"},
         )
 
-    print(f"\n=== Documentation for {result['file_path']} ===\n")
-    print(result["documentation"])
+    print(f"\n=== Documentation for {result.file_path} ===\n")
+    print(result.documentation)
 
 
 def run() -> None:

@@ -58,7 +58,7 @@ async def test_workflow_step_executes_and_returns_output():
     )
     step = WorkflowStep(config=cfg)
     result = await step.execute({"value": 42}, _ctx())
-    assert result == {"result": "42"}
+    assert result.model_dump() == {"result": "42"}
 
 
 async def test_workflow_step_raises_input_error_on_bad_input():
@@ -125,7 +125,7 @@ async def test_parallel_step_merges_branch_outputs():
     )
     step = ParallelWorkflowStep(config=cfg)
     result = await step.execute({"value": 7}, _ctx())
-    assert result == {"a": "a=7", "b": "b=7"}
+    assert result.model_dump() == {"a": "a=7", "b": "b=7"}
 
 
 async def test_parallel_step_raises_output_error_on_merge_mismatch():
@@ -183,10 +183,10 @@ async def test_conditional_step_routes_to_correct_branch():
     step = ConditionalWorkflowStep(config=cfg)
 
     result_fast = await step.execute({"value": 5}, _ctx())
-    assert result_fast == {"result": "fast"}
+    assert result_fast.model_dump() == {"result": "fast"}
 
     result_slow = await step.execute({"value": 20}, _ctx())
-    assert result_slow == {"result": "slow"}
+    assert result_slow.model_dump() == {"result": "slow"}
 
 
 async def test_conditional_step_unknown_branch_raises():
@@ -268,7 +268,7 @@ async def test_workflow_executes_steps_sequentially():
 
     workflow = Workflow(config=wf)
     result = await workflow.execute({"value": 5}, _ctx())
-    assert result == {"doubled": 10, "label": "val=10"}
+    assert result.model_dump() == {"doubled": 10, "label": "val=10"}
 
 
 async def test_workflow_single_step():
@@ -284,7 +284,7 @@ async def test_workflow_single_step():
 
     workflow = Workflow(config=wf)
     result = await workflow.execute({"value": 3}, _ctx())
-    assert result == {"result": "3"}
+    assert result.model_dump() == {"result": "3"}
 
 
 # ---------------------------------------------------------------------------

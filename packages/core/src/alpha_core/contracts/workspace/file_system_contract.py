@@ -3,6 +3,9 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 
 
+from alpha_core.schemas.filesystem import FileStat
+
+
 class FileSystemContract(ABC):
     """
     Abstract filesystem backend.  Implement this to plug in any storage layer
@@ -43,7 +46,7 @@ class FileSystemContract(ABC):
     def grep(self, pattern: str, path: str = ".") -> list[str]: ...
 
     @abstractmethod
-    def stat(self, path: str) -> dict: ...
+    def stat(self, path: str) -> FileStat: ...
 
 
 __all__ = ["FileSystemContract"]

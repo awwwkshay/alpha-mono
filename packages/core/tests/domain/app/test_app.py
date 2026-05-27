@@ -211,7 +211,7 @@ async def test_execute_workflow_delegates_to_workflow():
         app = AlphaApp(config=config)
 
     result = await app.execute_workflow("wf", {"v": 3})
-    assert result == {"v": 6}
+    assert result.model_dump() == {"v": 6}
 
 
 async def test_execute_workflow_unknown_id_raises():

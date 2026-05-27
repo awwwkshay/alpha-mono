@@ -1,6 +1,11 @@
 from __future__ import annotations
 
 from alpha_core.contracts.workspace.sandbox_contract import SandboxContract
+from alpha_core.schemas.sandbox import (
+    BackgroundCommandResult,
+    CommandResult,
+    ProcessOutput,
+)
 
 
 class E2BSandbox(SandboxContract):
@@ -35,7 +40,7 @@ class E2BSandbox(SandboxContract):
         command: str,
         *,
         background: bool = False,
-    ) -> dict:
+    ) -> CommandResult | BackgroundCommandResult:
         raise NotImplementedError("E2BSandbox is not yet implemented")
 
     async def get_process_output(
@@ -44,7 +49,7 @@ class E2BSandbox(SandboxContract):
         *,
         tail: int | None = None,
         wait: bool = False,
-    ) -> dict:
+    ) -> ProcessOutput:
         raise NotImplementedError("E2BSandbox is not yet implemented")
 
     async def kill_process(self, pid: int) -> None:

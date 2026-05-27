@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from alpha_core.contracts.workspace.file_system_contract import FileSystemContract
+from alpha_core.schemas.filesystem import FileStat
 
 
 class S3FileSystem(FileSystemContract):
@@ -60,7 +61,7 @@ class S3FileSystem(FileSystemContract):
     def grep(self, pattern: str, path: str = ".") -> list[str]:
         raise NotImplementedError("S3FileSystem is not yet implemented")
 
-    def stat(self, path: str) -> dict:
+    def stat(self, path: str) -> FileStat:
         raise NotImplementedError("S3FileSystem is not yet implemented")
 
 

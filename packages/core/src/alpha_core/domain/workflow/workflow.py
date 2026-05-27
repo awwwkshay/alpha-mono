@@ -1,6 +1,6 @@
 import asyncio
 from collections.abc import Awaitable
-from typing import Callable, Generic, TypeVar
+from typing import Any, Callable, Generic, TypeVar
 
 from pydantic import BaseModel, ValidationError
 
@@ -81,10 +81,17 @@ class WorkflowStep(Generic[InputT, OutputT]):
     ) -> WorkflowStep[InputT, OutputT]:
         return cls(config=config)
 
-    def prepare_execute(self) -> Callable[[dict, AppContext], Awaitable[dict]]:
-        async def _execute(input_data: dict, context: AppContext) -> dict:
+    def prepare_execute(self) -> Callable[[Any, AppContext], Awaitable[BaseModel]]:
+        async def _execute(input_data: Any, context: AppContext) -> BaseModel:
             try:
-                validated_input = self.config.input_schema.model_validate(input_data)
+                # model_validate can accept dicts or model instances
+                validated_input = self.config.input_schema.model_validate(
+                    input_data
+                    if isinstance(input_data, dict)
+                    else input_data.model_dump()
+                    if hasattr(input_data, "model_dump")
+                    else input_data
+                )
             except ValidationError as e:
                 raise WorkflowStepInputError(
                     self.config.name, self.config.input_schema, e
@@ -93,7 +100,14 @@ class WorkflowStep(Generic[InputT, OutputT]):
             result = await self.config.execute(validated_input, context)
 
             try:
-                return self.config.output_schema.model_validate(result).model_dump()
+                # result is an instance of output_schema already or dict
+                return self.config.output_schema.model_validate(
+                    result
+                    if isinstance(result, dict)
+                    else result.model_dump()
+                    if hasattr(result, "model_dump")
+                    else result
+                )
             except ValidationError as e:
                 raise WorkflowStepOutputError(
                     self.config.name, self.config.output_schema, e
@@ -113,8 +127,8 @@ class ParallelWorkflowStep(Generic[InputT, OutputT]):
         }
         self.execute = self.prepare_execute()
 
-    def prepare_execute(self) -> Callable[[dict, AppContext], Awaitable[dict]]:
-        async def _execute(input_data: dict, context: AppContext) -> dict:
+    def prepare_execute(self) -> Callable[[Any, AppContext], Awaitable[BaseModel]]:
+        async def _execute(input_data: Any, context: AppContext) -> BaseModel:
             results = await asyncio.gather(
                 *[
                     branch.execute(input_data, context)
@@ -123,9 +137,11 @@ class ParallelWorkflowStep(Generic[InputT, OutputT]):
             )
             merged: dict = {}
             for result in results:
-                merged.update(result)
+                merged.update(
+                    result.model_dump() if hasattr(result, "model_dump") else result
+                )
             try:
-                return self.config.output_schema.model_validate(merged).model_dump()
+                return self.config.output_schema.model_validate(merged)
             except ValidationError as e:
                 raise WorkflowStepOutputError(
                     self.config.name, self.config.output_schema, e
@@ -146,10 +162,16 @@ class ConditionalWorkflowStep(Generic[InputT, OutputT]):
         }
         self.execute = self.prepare_execute()
 
-    def prepare_execute(self) -> Callable[[dict, AppContext], Awaitable[dict]]:
-        async def _execute(input_data: dict, context: AppContext) -> dict:
+    def prepare_execute(self) -> Callable[[Any, AppContext], Awaitable[BaseModel]]:
+        async def _execute(input_data: Any, context: AppContext) -> BaseModel:
             try:
-                validated_input = self.config.input_schema.model_validate(input_data)
+                validated_input = self.config.input_schema.model_validate(
+                    input_data
+                    if isinstance(input_data, dict)
+                    else input_data.model_dump()
+                    if hasattr(input_data, "model_dump")
+                    else input_data
+                )
             except ValidationError as e:
                 raise WorkflowStepInputError(
                     self.config.name, self.config.input_schema, e
@@ -185,8 +207,8 @@ class Workflow(Generic[InputT, OutputT]):
     ) -> Workflow[InputT, OutputT]:
         return cls(config=config)
 
-    async def execute(self, input_data: dict, context: AppContext) -> dict:
-        current_data: dict = input_data
+    async def execute(self, input_data: Any, context: AppContext) -> Any:
+        current_data: Any = input_data
         for step in self.steps.values():
             current_data = await step.execute(current_data, context)
         return current_data

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from typing import Any
 from dotenv import load_dotenv
 
 from alpha_core.domain.agent.agent import Agent
@@ -66,7 +67,7 @@ class AlphaApp:
     async def __aexit__(self, *_: object) -> None:
         await self.teardown()
 
-    async def execute_workflow(self, workflow_id: AppId, input_data: dict) -> dict:
+    async def execute_workflow(self, workflow_id: AppId, input_data: Any) -> Any:
         return await self.workflows[workflow_id].execute(input_data, self.context)
 
 

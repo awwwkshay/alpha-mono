@@ -8,6 +8,11 @@ from pathlib import Path
 from typing import Literal
 
 from alpha_core.contracts.workspace.sandbox_contract import SandboxContract
+from alpha_core.schemas.sandbox import (
+    BackgroundCommandResult,
+    CommandResult,
+    ProcessOutput,
+)
 
 
 @dataclass
@@ -69,7 +74,7 @@ class LocalSandbox(SandboxContract):
         command: str,
         *,
         background: bool = False,
-    ) -> dict:
+    ) -> CommandResult | BackgroundCommandResult:
         wrapped = self._wrap_command(command)
 
         if background:
@@ -93,17 +98,17 @@ class LocalSandbox(SandboxContract):
         finally:
             self._fg_processes.pop(proc.pid, None)
 
-        return {
-            "stdout": stdout_b.decode(errors="replace"),
-            "stderr": stderr_b.decode(errors="replace"),
-            "exit_code": proc.returncode,
-        }
+        return CommandResult(
+            stdout=stdout_b.decode(errors="replace"),
+            stderr=stderr_b.decode(errors="replace"),
+            exit_code=proc.returncode if proc.returncode is not None else -1,
+        )
 
     # ------------------------------------------------------------------
     # Background process management
     # ------------------------------------------------------------------
 
-    async def _spawn_background(self, command: str) -> dict:
+    async def _spawn_background(self, command: str) -> BackgroundCommandResult:
         proc = await asyncio.create_subprocess_shell(
             command,
             stdout=asyncio.subprocess.PIPE,
@@ -114,7 +119,7 @@ class LocalSandbox(SandboxContract):
         bg = _BackgroundProcess(proc=proc)
         self._bg_processes[proc.pid] = bg
         bg._reader_task = asyncio.create_task(self._read_bg_output(bg))
-        return {"pid": proc.pid, "background": True}
+        return BackgroundCommandResult(pid=proc.pid, background=True)
 
     @staticmethod
     async def _read_bg_output(bg: _BackgroundProcess) -> None:
@@ -139,7 +144,7 @@ class LocalSandbox(SandboxContract):
         *,
         tail: int | None = None,
         wait: bool = False,
-    ) -> dict:
+    ) -> ProcessOutput:
         bg = self._bg_processes.get(pid)
         if bg is None:
             raise ValueError(f"No background process with pid {pid}")
@@ -154,12 +159,12 @@ class LocalSandbox(SandboxContract):
             stderr_lines = stderr_lines[-tail:]
 
         running = bg.proc.returncode is None
-        return {
-            "stdout": "".join(stdout_lines),
-            "stderr": "".join(stderr_lines),
-            "exit_code": bg.proc.returncode,
-            "running": running,
-        }
+        return ProcessOutput(
+            stdout="".join(stdout_lines),
+            stderr="".join(stderr_lines),
+            exit_code=bg.proc.returncode,
+            running=running,
+        )
 
     # ------------------------------------------------------------------
     # Process control

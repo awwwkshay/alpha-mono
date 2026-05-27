@@ -3,12 +3,13 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from litellm.types.llms.openai import (
     ChatCompletionToolParam,
     ChatCompletionToolParamFunctionChunk,
 )
+from pydantic import BaseModel
 
 from alpha_core.contracts.workspace.file_system_contract import FileSystemContract
 from alpha_core.contracts.workspace.sandbox_contract import SandboxContract
@@ -373,7 +374,9 @@ class Workspace:
 
     async def execute_tool(self, name: str, arguments: dict) -> str:
         try:
-            result = await self._dispatch(name, arguments)
+            result: Any = await self._dispatch(name, arguments)
+            if isinstance(result, BaseModel):
+                result = result.model_dump()
         except Exception as exc:
             result = {"error": str(exc)}
         return json.dumps(result)

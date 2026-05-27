@@ -3,6 +3,13 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 
 
+from alpha_core.schemas.sandbox import (
+    BackgroundCommandResult,
+    CommandResult,
+    ProcessOutput,
+)
+
+
 class SandboxContract(ABC):
     """
     Abstract command-execution backend.  Implement this to plug in any sandbox
@@ -21,7 +28,7 @@ class SandboxContract(ABC):
         command: str,
         *,
         background: bool = False,
-    ) -> dict:
+    ) -> CommandResult | BackgroundCommandResult:
         """
         Run a shell command.
 
@@ -40,7 +47,7 @@ class SandboxContract(ABC):
         *,
         tail: int | None = None,
         wait: bool = False,
-    ) -> dict:
+    ) -> ProcessOutput:
         """
         Retrieve accumulated output from a background process.
 

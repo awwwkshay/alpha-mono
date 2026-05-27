@@ -121,9 +121,9 @@ def test_stat_on_file(tmp_path):
     f.write_text("content")
     fs = _fs(tmp_path)
     s = fs.stat("f.txt")
-    assert s["is_file"] is True
-    assert s["is_dir"] is False
-    assert s["size"] > 0
+    assert s.is_file is True
+    assert s.is_dir is False
+    assert s.size > 0
 
 
 def test_stat_on_directory(tmp_path):
@@ -131,8 +131,8 @@ def test_stat_on_directory(tmp_path):
     d.mkdir()
     fs = _fs(tmp_path)
     s = fs.stat("subdir")
-    assert s["is_dir"] is True
-    assert s["is_file"] is False
+    assert s.is_dir is True
+    assert s.is_file is False
 
 
 # ---------------------------------------------------------------------------

@@ -7,6 +7,7 @@ import shutil
 from pathlib import Path
 
 from alpha_core.contracts.workspace.file_system_contract import FileSystemContract
+from alpha_core.schemas.filesystem import FileStat
 
 
 class LocalFileSystem(FileSystemContract):
@@ -115,7 +116,7 @@ class LocalFileSystem(FileSystemContract):
                 pass
         return results
 
-    def stat(self, path: str) -> dict:
+    def stat(self, path: str) -> FileStat:
         target = self._resolve(path)
         s = target.stat()
         display = (
@@ -123,13 +124,13 @@ class LocalFileSystem(FileSystemContract):
             if target.is_relative_to(self._base)
             else str(target)
         )
-        return {
-            "path": display,
-            "size": s.st_size,
-            "mtime": s.st_mtime,
-            "is_file": target.is_file(),
-            "is_dir": target.is_dir(),
-        }
+        return FileStat(
+            path=display,
+            size=s.st_size,
+            mtime=s.st_mtime,
+            is_file=target.is_file(),
+            is_dir=target.is_dir(),
+        )
 
     # ------------------------------------------------------------------
     # Write operations

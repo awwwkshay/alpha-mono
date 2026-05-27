@@ -71,7 +71,7 @@ async def my_step(input: MyInput, context: AppContext) -> MyOutput: ...
 
 Input is validated against `input_schema` before the function is called. Output is validated against `output_schema` before being passed downstream.
 
-**`ParallelWorkflowStep`** — fans the same input out to all branches concurrently (`asyncio.gather`), then merges the results into a single dict. Validated constraints:
+**`ParallelWorkflowStep`** — fans the same input out to all branches concurrently (`asyncio.gather`), then merges the results into a single Pydantic model. Validated constraints:
 
 - All branches must accept the same `input_schema` as the parallel step.
 - Branch output fields must be non-overlapping.
@@ -219,5 +219,7 @@ packages/core/src/alpha_core/
 └── types/
     └── app_id.py
 ```
+
+Last updated: 2026-05-27
 
 Last updated: 2026-05-27
