@@ -1,6 +1,12 @@
 repos:
   - repo: local
     hooks:
+      - id: unit-test
+        name: unit-test
+        entry: uv run pytest packages/core/tests/
+        language: system
+        pass_filenames: false
+        always_run: true
       - id: ruff-format
         name: ruff-format
         entry: uv run ruff format
