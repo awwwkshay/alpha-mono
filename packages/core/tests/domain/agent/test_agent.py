@@ -10,7 +10,11 @@ from alpha_core.domain.agent.agent import (
     _accumulate_tool_call_delta,
     _build_system,
 )
-from alpha_core.domain.evals.scorer import Scorer, ScorerConfig, ScorerResult
+from alpha_core.contracts.evals.scorer_contract import (
+    Scorer,
+    ScorerConfig,
+    ScorerResult,
+)
 from alpha_core.schemas.agent_config import AgentConfig
 from alpha_core.schemas.app_config import AppConfig
 from alpha_core.schemas.app_context import AppContext

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from alpha_core.domain.evals.scorer import ScorerConfig
+from alpha_core.contracts.evals.scorer_contract import ScorerConfig
 from alpha_core.domain.evals.scorers import AnswerRelevancyScorer, CompletenessScorer
 from alpha_core.schemas.agent_config import AgentConfig
 from alpha_core.schemas.filesystem_config import LocalFilesystemConfig

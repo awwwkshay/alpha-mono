@@ -5,7 +5,11 @@ from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, Field
 
-from alpha_core.domain.evals.scorer import Scorer, ScorerConfig, ScorerResult
+from alpha_core.contracts.evals.scorer_contract import (
+    Scorer,
+    ScorerConfig,
+    ScorerResult,
+)
 
 if TYPE_CHECKING:
     from alpha_core.domain.agent.agent import Agent

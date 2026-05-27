@@ -5,7 +5,7 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from alpha_core.domain.evals.scorer import ScorerConfig
+from alpha_core.contracts.evals.scorer_contract import ScorerConfig
 from alpha_core.schemas.workspace_config import WorkspaceConfig
 
 

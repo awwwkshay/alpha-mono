@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from alpha_core.domain.evals.scorer import ScorerResult
+from alpha_core.contracts.evals.scorer_contract import ScorerResult
 from alpha_core.domain.evals.scorers.answer_relevancy import AnswerRelevancyScorer
 from alpha_core.domain.evals.scorers.bias import BiasScorer
 from alpha_core.domain.evals.scorers.completeness import CompletenessScorer

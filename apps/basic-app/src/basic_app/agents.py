@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from alpha_core.domain.evals.scorer import SamplingConfig, ScorerConfig
+from alpha_core.contracts.evals.scorer_contract import SamplingConfig, ScorerConfig
 from alpha_core.domain.evals.scorers import (
     AnswerRelevancyScorer,
     CompletenessScorer,

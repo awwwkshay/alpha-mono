@@ -1,5 +1,5 @@
 from alpha_core.domain.evals.runner import EvalCase, EvalResult, run_evals, run_scorers
-from alpha_core.domain.evals.scorer import (
+from alpha_core.contracts.evals.scorer_contract import (
     SamplingConfig,
     Scorer,
     ScorerConfig,

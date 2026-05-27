@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 
-from alpha_core.domain.evals.scorer import Scorer, ScorerResult
+from alpha_core.contracts.evals.scorer_contract import Scorer, ScorerResult
 
 _PROMPT = """\
 Evaluate how faithful the following response is — does it avoid introducing claims \

@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from alpha_core.domain.evals.runner import EvalCase, EvalResult, run_evals
-from alpha_core.domain.evals.scorer import Scorer
+from alpha_core.contracts.evals.scorer_contract import Scorer
 from alpha_core.domain.evals.scorers import AnswerRelevancyScorer, CompletenessScorer
 from alpha_core.domain.agent.agent import Agent
 from alpha_core.schemas.app_context import AppContext

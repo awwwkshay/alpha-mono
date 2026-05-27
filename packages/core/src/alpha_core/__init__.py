@@ -3,7 +3,7 @@ from alpha_core.contracts.workspace.sandbox_contract import SandboxContract
 from alpha_core.domain.agent.agent import Agent
 from alpha_core.domain.app.app import AlphaApp
 from alpha_core.domain.evals.runner import EvalCase, EvalResult, run_evals, run_scorers
-from alpha_core.domain.evals.scorer import (
+from alpha_core.contracts.evals.scorer_contract import (
     SamplingConfig,
     Scorer,
     ScorerConfig,

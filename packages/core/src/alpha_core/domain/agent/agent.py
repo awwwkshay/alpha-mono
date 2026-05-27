@@ -19,7 +19,7 @@ from opentelemetry import trace
 
 from alpha_core.log import logger
 from alpha_core.domain.evals.runner import run_scorers
-from alpha_core.domain.evals.scorer import ScorerResult
+from alpha_core.contracts.evals.scorer_contract import ScorerResult
 from alpha_core.schemas.agent_config import AgentConfig
 from alpha_core.schemas.app_context import AppContext
 

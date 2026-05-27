@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from alpha_core.domain.evals.scorer import (
+from alpha_core.contracts.evals.scorer_contract import (
     Scorer,
     SamplingConfig,
     ScorerConfig,
