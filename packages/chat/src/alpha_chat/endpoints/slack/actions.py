@@ -1,0 +1,52 @@
+from __future__ import annotations
+
+import json
+from typing import TYPE_CHECKING, Any
+
+from fastapi import APIRouter, HTTPException, Request
+from slack_sdk.signature import SignatureVerifier
+
+from alpha_chat.log import logger
+from alpha_chat.schemas.slack import SlackAction
+
+if TYPE_CHECKING:
+    from alpha_chat.adapters.slack_adapter import SlackAdapter
+
+
+def build_actions_router(adapter: SlackAdapter) -> APIRouter:
+    actions_router = APIRouter()
+
+    @actions_router.post("/actions")
+    async def slack_actions(request: Request) -> Any:
+        body = await request.body()
+        verifier = SignatureVerifier(adapter.signing_secret)
+        timestamp = request.headers.get("x-slack-request-timestamp", "")
+        signature = request.headers.get("x-slack-signature", "")
+        if not verifier.is_valid(body.decode(), timestamp, signature):
+            raise HTTPException(status_code=401, detail="Invalid Slack signature")
+
+        form = await request.form()
+        payload_str = form.get("payload", "")
+        if not payload_str:
+            raise HTTPException(status_code=400, detail="Missing payload")
+
+        payload: dict[str, Any] = json.loads(str(payload_str))
+        action = SlackAction(
+            type=payload.get("type", ""),
+            actions=payload.get("actions", []),
+            user=payload.get("user", {}),
+            channel=payload.get("channel"),
+            trigger_id=payload.get("trigger_id", ""),
+            response_url=payload.get("response_url"),
+            payload=payload,
+        )
+        logger.info(
+            f"Slack action type={action.type} from user={action.user.get('id')}"
+        )
+        await adapter.handle_action(action)
+        return {"ok": True}
+
+    return actions_router
+
+
+__all__ = ["build_actions_router"]

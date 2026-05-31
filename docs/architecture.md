@@ -121,7 +121,22 @@ result: Summary = await agent.generate_structured_async(prompt, context, Summary
 
 ### Tool injection
 
-Tools are provided by the agent's `Workspace`. If no workspace is configured, the agent receives no tools and the LLM cannot call any. The workspace's `get_tools()` method returns the litellm-compatible tool schema list.
+Tools come from two sources that are merged at call time:
+
+1. **Workspace tools** — if a `Workspace` is configured, its `get_tools()` method returns filesystem/sandbox/skill tool schemas.
+2. **Workflow tools** — any `Workflow` instances passed via `Agent(workflows={...})` are exposed as tools. The schema is auto-generated from the workflow's `input_schema` Pydantic model using `model_json_schema()`.
+
+```python
+agent = Agent(
+    config=config,
+    workspace=my_workspace,
+    workflows={"run_pipeline": my_workflow},
+)
+```
+
+When the LLM calls a workflow tool, the agent validates the arguments against `workflow.config.input_schema`, calls `workflow.execute(input_data, context)`, and injects the serialised output back into the message loop. Workspace tools and workflow tools coexist — the agent dispatches to the correct handler based on the tool name.
+
+If neither a workspace nor any workflows are configured, the agent receives no tools.
 
 ### Model selection
 
@@ -197,6 +212,35 @@ Subclass `SandboxContract` and implement `setup`, `teardown`, `execute_command`,
 
 ---
 
+## Chat integrations (alpha-chat)
+
+The `packages/chat` package (`alpha_chat`) provides:
+
+- **Clients** — thin async wrappers over official SDKs:
+  - `SlackClient` — wraps `slack_sdk.WebClient`: `send_message`, `react`, `open_modal`, `ack_slash_command`
+  - `TelegramClient` — wraps `python-telegram-bot`: `send_message`, `set_webhook`, `delete_webhook`
+  - `GithubClient` — wraps `PyGithub`: `get_repo`, `create_issue`, `list_prs`
+
+- **Endpoints** — FastAPI `APIRouter` builders, one per platform. All Slack endpoints verify `X-Slack-Signature` HMAC before processing:
+  - `build_slack_router(adapter)` — mounts `/events`, `/commands`, `/actions`
+  - `build_telegram_router(adapter)` — mounts `/webhook`
+
+- **Adapters** — bridge layer between platform events and an `Agent`:
+  - `SlackAdapter(agent, context, slack_client)` — `handle_event`, `handle_command`, `handle_action`
+  - `TelegramAdapter(agent, context, telegram_client)` — `handle_update`
+
+**Wiring pattern:**
+
+```python
+slack_client = SlackClient(token=..., signing_secret=...)
+adapter = SlackAdapter(agent=my_agent, context=app_context, slack_client=slack_client)
+
+app = FastAPI()
+app.include_router(build_slack_router(adapter), prefix="/slack")
+```
+
+---
+
 ## Package structure
 
 ```text
@@ -205,7 +249,7 @@ packages/core/src/alpha_core/
 │   ├── app/
 │   │   └── app.py               # AlphaApp
 │   ├── agent/
-│   │   ├── agent.py             # Agent, tool-use loop
+│   │   ├── agent.py             # Agent, tool-use loop, workflow tool dispatch
 │   │   └── tool/agent_tool.py
 │   ├── workflow/
 │   │   └── workflow.py          # Workflow, WorkflowStep, Parallel, Conditional
@@ -231,6 +275,26 @@ packages/core/src/alpha_core/
 │       └── sandbox_contract.py
 └── types/
     └── app_id.py
+
+packages/chat/src/alpha_chat/
+├── clients/
+│   ├── slack_client.py          # SlackClient
+│   ├── telegram_client.py       # TelegramClient
+│   └── github_client.py         # GithubClient
+├── endpoints/
+│   ├── slack/
+│   │   ├── router.py            # build_slack_router
+│   │   ├── events.py            # POST /events
+│   │   ├── commands.py          # POST /commands
+│   │   └── actions.py           # POST /actions
+│   └── telegram/
+│       └── webhook.py           # POST /webhook, build_telegram_router
+├── adapters/
+│   ├── slack_adapter.py         # SlackAdapter
+│   └── telegram_adapter.py      # TelegramAdapter
+└── schemas/
+    ├── slack.py                 # SlackMessageEvent, SlackCommand, SlackAction, ...
+    └── telegram.py              # TelegramUpdate, TelegramMessage, ...
 ```
 
-Last updated: 2026-05-27
+Last updated: 2026-05-30

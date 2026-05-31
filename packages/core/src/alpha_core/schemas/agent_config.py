@@ -6,6 +6,8 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from alpha_core.contracts.evals.scorer_contract import ScorerConfig
+from alpha_core.domain.agent.tool.agent_tool import AgentTool
+from alpha_core.schemas.workflow_config import WorkflowConfig
 from alpha_core.schemas.workspace_config import WorkspaceConfig
 
 
@@ -30,6 +32,14 @@ class AgentConfig(BaseModel):
             "Workspace configuration for this agent. "
             "Overrides any global workspace set on AppConfig."
         ),
+    )
+    workflows: dict[str, WorkflowConfig[Any, Any]] = Field(
+        default_factory=dict,
+        description="Named workflow configs the agent can invoke as tools.",
+    )
+    tools: dict[str, AgentTool[Any, Any]] = Field(
+        default_factory=dict,
+        description="Named tools the agent can invoke directly.",
     )
     scorers: dict[str, ScorerConfig] = Field(
         default_factory=dict,

@@ -244,11 +244,6 @@ class ConditionalWorkflowStepConfig(BaseModel, Generic[InputT, OutputT]):
             raise _build_config_error(e) from None
 
 
-AnyStepConfig = (
-    WorkflowStepConfig | ParallelWorkflowStepConfig | ConditionalWorkflowStepConfig
-)
-
-
 class WorkflowConfig(BaseModel, Generic[InputT, OutputT]):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
@@ -256,7 +251,13 @@ class WorkflowConfig(BaseModel, Generic[InputT, OutputT]):
     description: str | None = Field(default=None)
     input_schema: type[InputT] = Field(...)
     output_schema: type[OutputT] = Field(...)
-    steps: dict[str, AnyStepConfig] = Field(default_factory=dict)
+    steps: dict[
+        str,
+        WorkflowStepConfig
+        | ParallelWorkflowStepConfig
+        | ConditionalWorkflowStepConfig
+        | WorkflowConfig,
+    ] = Field(default_factory=dict)
 
     @model_validator(mode="after")
     def validate_step_chain(self) -> WorkflowConfig[InputT, OutputT]:
@@ -300,7 +301,13 @@ class WorkflowConfig(BaseModel, Generic[InputT, OutputT]):
         name: str,
         input_schema: type[InputT],
         output_schema: type[OutputT],
-        steps: dict[str, AnyStepConfig],
+        steps: dict[
+            str,
+            WorkflowStepConfig
+            | ParallelWorkflowStepConfig
+            | ConditionalWorkflowStepConfig
+            | WorkflowConfig,
+        ],
         description: str | None = None,
     ) -> WorkflowConfig[InputT, OutputT]:
         from alpha_core.schemas.app_context import (
@@ -308,6 +315,7 @@ class WorkflowConfig(BaseModel, Generic[InputT, OutputT]):
         )
 
         WorkflowStepConfig.model_rebuild()
+        cls.model_rebuild()
         try:
             return cls(
                 name=name,
@@ -319,6 +327,13 @@ class WorkflowConfig(BaseModel, Generic[InputT, OutputT]):
         except ValidationError as e:
             raise _build_config_error(e) from None
 
+
+AnyStepConfig = (
+    WorkflowStepConfig
+    | ParallelWorkflowStepConfig
+    | ConditionalWorkflowStepConfig
+    | WorkflowConfig
+)
 
 __all__ = [
     "AnyStepConfig",

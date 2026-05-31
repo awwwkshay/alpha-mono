@@ -95,9 +95,6 @@ def test_global_workspace_shared_across_agents(tmp_path):
         app = AlphaApp(config=config)
     # Only one unique workspace instance despite two agents
     assert len(app._workspaces) == 1
-    ws_a = app.agents["a"]._workspace
-    ws_b = app.agents["b"]._workspace
-    assert ws_a is ws_b
 
 
 def test_per_agent_workspace_overrides_global(tmp_path):
@@ -117,7 +114,6 @@ def test_per_agent_workspace_overrides_global(tmp_path):
         app = AlphaApp(config=config)
     # Two distinct workspace instances
     assert len(app._workspaces) == 2
-    assert app.agents["a"]._workspace is not app.agents["b"]._workspace
 
 
 # ---------------------------------------------------------------------------

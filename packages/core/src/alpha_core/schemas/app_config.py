@@ -3,6 +3,7 @@ from pathlib import Path
 from pydantic import BaseModel, Field
 
 from alpha_core.schemas.agent_config import AgentConfig
+from alpha_core.schemas.server_config import ServerConfig
 from alpha_core.schemas.workflow_config import WorkflowConfig
 from alpha_core.schemas.workspace_config import WorkspaceConfig
 from alpha_core.types.app_id import AppId
@@ -35,6 +36,10 @@ class AppConfig(BaseModel):
         description=(
             "Global workspace inherited by all agents that do not declare their own."
         ),
+    )
+    server: ServerConfig | None = Field(
+        default=None,
+        description="HTTP server configuration. Required to call AlphaApp.serve().",
     )
     debug: bool = Field(
         default=False,

@@ -1,10 +1,12 @@
+from __future__ import annotations
+
 import asyncio
-from collections.abc import Awaitable
-from typing import Any, Callable, Generic, TypeVar
+from typing import Any, TypeVar
 
 from opentelemetry import trace
 from pydantic import BaseModel, ValidationError
 
+from alpha_core.contracts.executable import Executable
 from alpha_core.log import logger
 from alpha_core.schemas.app_context import AppContext
 from alpha_core.schemas.workflow_config import (
@@ -17,6 +19,7 @@ from alpha_core.schemas.workflow_config import (
 WorkflowStepConfig.model_rebuild()
 ParallelWorkflowStepConfig.model_rebuild()
 ConditionalWorkflowStepConfig.model_rebuild()
+WorkflowConfig.model_rebuild()
 
 
 def _format_field_errors(error: ValidationError, schema: type[BaseModel]) -> str:
@@ -70,12 +73,24 @@ class WorkflowBranchError(Exception):
 
 InputT = TypeVar("InputT", bound=BaseModel)
 OutputT = TypeVar("OutputT", bound=BaseModel)
+_T = TypeVar("_T", bound=BaseModel)
 
 
-class WorkflowStep(Generic[InputT, OutputT]):
-    def __init__(self, *, config: WorkflowStepConfig[InputT, OutputT]):
+def _coerce(data: Any, schema: type[_T]) -> _T:
+    return schema.model_validate(
+        data
+        if isinstance(data, dict)
+        else data.model_dump()
+        if hasattr(data, "model_dump")
+        else data
+    )
+
+
+class WorkflowStep(Executable[InputT, OutputT]):
+    def __init__(self, *, config: WorkflowStepConfig[InputT, OutputT]) -> None:
         self.config = config
-        self.execute = self.prepare_execute()
+        self.input_schema = config.input_schema
+        self.output_schema = config.output_schema
 
     @classmethod
     def create(
@@ -83,144 +98,120 @@ class WorkflowStep(Generic[InputT, OutputT]):
     ) -> WorkflowStep[InputT, OutputT]:
         return cls(config=config)
 
-    def prepare_execute(self) -> Callable[[Any, AppContext], Awaitable[BaseModel]]:
-        async def _execute(input_data: Any, context: AppContext) -> BaseModel:
-            tracer = trace.get_tracer(__name__)
-            logger.debug(f"Executing step '{self.config.name}'")
-            with tracer.start_as_current_span(
-                f"WorkflowStep.execute/{self.config.name}",
-                attributes={"step_name": self.config.name, "step_type": "WorkflowStep"},
-            ):
-                try:
-                    # model_validate can accept dicts or model instances
-                    validated_input = self.config.input_schema.model_validate(
-                        input_data
-                        if isinstance(input_data, dict)
-                        else input_data.model_dump()
-                        if hasattr(input_data, "model_dump")
-                        else input_data
-                    )
-                except ValidationError as e:
-                    raise WorkflowStepInputError(
-                        self.config.name, self.config.input_schema, e
-                    ) from e
+    async def execute(self, input_data: Any, context: AppContext) -> OutputT:
+        tracer = trace.get_tracer(__name__)
+        logger.debug(f"Executing step '{self.config.name}'")
+        with tracer.start_as_current_span(
+            f"WorkflowStep.execute/{self.config.name}",
+            attributes={"step_name": self.config.name, "step_type": "WorkflowStep"},
+        ):
+            try:
+                validated_input = _coerce(input_data, self.config.input_schema)
+            except ValidationError as e:
+                raise WorkflowStepInputError(
+                    self.config.name, self.config.input_schema, e
+                ) from e
 
-                result = await self.config.execute(validated_input, context)
+            result = await self.config.execute(validated_input, context)
 
-                try:
-                    # result is an instance of output_schema already or dict
-                    return self.config.output_schema.model_validate(
-                        result
-                        if isinstance(result, dict)
-                        else result.model_dump()
-                        if hasattr(result, "model_dump")
-                        else result
-                    )
-                except ValidationError as e:
-                    raise WorkflowStepOutputError(
-                        self.config.name, self.config.output_schema, e
-                    ) from e
-
-        return _execute
+            try:
+                return _coerce(result, self.config.output_schema)
+            except ValidationError as e:
+                raise WorkflowStepOutputError(
+                    self.config.name, self.config.output_schema, e
+                ) from e
 
 
-class ParallelWorkflowStep(Generic[InputT, OutputT]):
+class ParallelWorkflowStep(Executable[InputT, OutputT]):
     """Runs all branches concurrently with the same input and merges their outputs."""
 
-    def __init__(self, *, config: ParallelWorkflowStepConfig[InputT, OutputT]):
+    def __init__(self, *, config: ParallelWorkflowStepConfig[InputT, OutputT]) -> None:
         self.config = config
+        self.input_schema = config.input_schema
+        self.output_schema = config.output_schema
         self.branches = {
             branch_id: WorkflowStep(config=branch_config)
             for branch_id, branch_config in config.branches.items()
         }
-        self.execute = self.prepare_execute()
 
-    def prepare_execute(self) -> Callable[[Any, AppContext], Awaitable[BaseModel]]:
-        async def _execute(input_data: Any, context: AppContext) -> BaseModel:
-            tracer = trace.get_tracer(__name__)
-            logger.debug(f"Executing parallel step '{self.config.name}'")
-            with tracer.start_as_current_span(
-                f"ParallelWorkflowStep.execute/{self.config.name}",
-                attributes={
-                    "step_name": self.config.name,
-                    "step_type": "ParallelWorkflowStep",
-                },
-            ):
-                results = await asyncio.gather(
-                    *[
-                        branch.execute(input_data, context)
-                        for branch in self.branches.values()
-                    ]
+    async def execute(self, input_data: Any, context: AppContext) -> OutputT:
+        tracer = trace.get_tracer(__name__)
+        logger.debug(f"Executing parallel step '{self.config.name}'")
+        with tracer.start_as_current_span(
+            f"ParallelWorkflowStep.execute/{self.config.name}",
+            attributes={
+                "step_name": self.config.name,
+                "step_type": "ParallelWorkflowStep",
+            },
+        ):
+            results = await asyncio.gather(
+                *[
+                    branch.execute(input_data, context)
+                    for branch in self.branches.values()
+                ]
+            )
+            merged: dict = {}
+            for result in results:
+                merged.update(
+                    result.model_dump() if hasattr(result, "model_dump") else result
                 )
-                merged: dict = {}
-                for result in results:
-                    merged.update(
-                        result.model_dump() if hasattr(result, "model_dump") else result
-                    )
-                try:
-                    return self.config.output_schema.model_validate(merged)
-                except ValidationError as e:
-                    raise WorkflowStepOutputError(
-                        self.config.name, self.config.output_schema, e
-                    ) from e
-
-        return _execute
+            try:
+                return self.config.output_schema.model_validate(merged)
+            except ValidationError as e:
+                raise WorkflowStepOutputError(
+                    self.config.name, self.config.output_schema, e
+                ) from e
 
 
-class ConditionalWorkflowStep(Generic[InputT, OutputT]):
-    """Executes exactly one branch based on the return value of the
-    condition function."""
+class ConditionalWorkflowStep(Executable[InputT, OutputT]):
+    """Executes exactly one branch based on the return value of the condition function."""
 
-    def __init__(self, *, config: ConditionalWorkflowStepConfig[InputT, OutputT]):
+    def __init__(
+        self, *, config: ConditionalWorkflowStepConfig[InputT, OutputT]
+    ) -> None:
         self.config = config
+        self.input_schema = config.input_schema
+        self.output_schema = config.output_schema
         self.branches = {
             branch_id: WorkflowStep(config=branch_config)
             for branch_id, branch_config in config.branches.items()
         }
-        self.execute = self.prepare_execute()
 
-    def prepare_execute(self) -> Callable[[Any, AppContext], Awaitable[BaseModel]]:
-        async def _execute(input_data: Any, context: AppContext) -> BaseModel:
-            tracer = trace.get_tracer(__name__)
-            logger.debug(f"Executing conditional step '{self.config.name}'")
-            with tracer.start_as_current_span(
-                f"ConditionalWorkflowStep.execute/{self.config.name}",
-                attributes={
-                    "step_name": self.config.name,
-                    "step_type": "ConditionalWorkflowStep",
-                },
-            ):
-                try:
-                    validated_input = self.config.input_schema.model_validate(
-                        input_data
-                        if isinstance(input_data, dict)
-                        else input_data.model_dump()
-                        if hasattr(input_data, "model_dump")
-                        else input_data
-                    )
-                except ValidationError as e:
-                    raise WorkflowStepInputError(
-                        self.config.name, self.config.input_schema, e
-                    ) from e
+    async def execute(self, input_data: Any, context: AppContext) -> OutputT:
+        tracer = trace.get_tracer(__name__)
+        logger.debug(f"Executing conditional step '{self.config.name}'")
+        with tracer.start_as_current_span(
+            f"ConditionalWorkflowStep.execute/{self.config.name}",
+            attributes={
+                "step_name": self.config.name,
+                "step_type": "ConditionalWorkflowStep",
+            },
+        ):
+            try:
+                validated_input = _coerce(input_data, self.config.input_schema)
+            except ValidationError as e:
+                raise WorkflowStepInputError(
+                    self.config.name, self.config.input_schema, e
+                ) from e
 
-                branch_key = self.config.condition(validated_input, context)
-                if branch_key not in self.branches:
-                    raise WorkflowBranchError(
-                        self.config.name, branch_key, list(self.branches.keys())
-                    )
-                return await self.branches[branch_key].execute(input_data, context)
-
-        return _execute
+            branch_key = self.config.condition(validated_input, context)
+            if branch_key not in self.branches:
+                raise WorkflowBranchError(
+                    self.config.name, branch_key, list(self.branches.keys())
+                )
+            return await self.branches[branch_key].execute(input_data, context)
 
 
-class Workflow(Generic[InputT, OutputT]):
-    def __init__(self, *, config: WorkflowConfig[InputT, OutputT]):
+class Workflow(Executable[InputT, OutputT]):
+    def __init__(self, *, config: WorkflowConfig[InputT, OutputT]) -> None:
         self.config = config
-        self.steps: dict[
-            str, WorkflowStep | ParallelWorkflowStep | ConditionalWorkflowStep
-        ] = {}
+        self.input_schema = config.input_schema
+        self.output_schema = config.output_schema
+        self.steps: dict[str, Executable[Any, Any]] = {}
         for step_id, step_config in config.steps.items():
-            if isinstance(step_config, ParallelWorkflowStepConfig):
+            if isinstance(step_config, WorkflowConfig):
+                self.steps[step_id] = Workflow(config=step_config)
+            elif isinstance(step_config, ParallelWorkflowStepConfig):
                 self.steps[step_id] = ParallelWorkflowStep(config=step_config)
             elif isinstance(step_config, ConditionalWorkflowStepConfig):
                 self.steps[step_id] = ConditionalWorkflowStep(config=step_config)

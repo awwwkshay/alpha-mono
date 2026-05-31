@@ -9,7 +9,7 @@ from pydantic import BaseModel
 from alpha_core.domain.agent.agent import (
     Agent,
     _accumulate_tool_call_delta,
-    _build_system,
+    _workflow_to_tool,
 )
 from alpha_core.contracts.evals.scorer_contract import (
     Scorer,
@@ -19,6 +19,7 @@ from alpha_core.contracts.evals.scorer_contract import (
 from alpha_core.schemas.agent_config import AgentConfig
 from alpha_core.schemas.app_config import AppConfig
 from alpha_core.schemas.app_context import AppContext
+from alpha_core.schemas.workflow_config import WorkflowConfig, WorkflowStepConfig
 from litellm.types.llms.openai import ChatCompletionAssistantToolCall
 
 
@@ -37,14 +38,14 @@ class _MockScorer(Scorer):
 # ---------------------------------------------------------------------------
 
 
-def _make_agent(*, workspace=None, scorers=None) -> Agent:
+def _make_agent(*, scorers=None) -> Agent:
     config = AgentConfig(
         name="Test",
         system_prompt="Be helpful.",
         model="test/model",
         scorers=scorers or {},
     )
-    return Agent(config=config, workspace=workspace)
+    return Agent(config=config)
 
 
 def _make_context() -> AppContext:
@@ -69,32 +70,6 @@ def _make_tool_call(name: str = "read_file", arguments: str = '{"path": "f.txt"}
     tc.function.name = name
     tc.function.arguments = arguments
     return tc
-
-
-# ---------------------------------------------------------------------------
-# _build_system
-# ---------------------------------------------------------------------------
-
-
-def test_build_system_no_workspace():
-    config = AgentConfig(name="A", system_prompt="Base prompt.", model="m")
-    result = _build_system(config, None)
-    assert result == "Base prompt."
-
-
-def test_build_system_workspace_no_additions():
-    config = AgentConfig(name="A", system_prompt="Base.", model="m")
-    ws = MagicMock()
-    ws.get_system_prompt_additions.return_value = ""
-    assert _build_system(config, ws) == "Base."
-
-
-def test_build_system_workspace_with_additions():
-    config = AgentConfig(name="A", system_prompt="Base.", model="m")
-    ws = MagicMock()
-    ws.get_system_prompt_additions.return_value = "Extra context."
-    result = _build_system(config, ws)
-    assert result == "Base.\n\nExtra context."
 
 
 # ---------------------------------------------------------------------------
@@ -208,61 +183,56 @@ async def test_generate_raw_empty_tool_calls_and_no_content_raises():
 
 
 async def test_generate_raw_tool_call_cycle():
-    ws = MagicMock()
-    ws.get_tools.return_value = [
-        {"type": "function", "function": {"name": "read_file"}}
-    ]
-    ws.get_system_prompt_additions.return_value = ""
-    ws.execute_tool = AsyncMock(return_value='{"content": "file data"}')
-
-    agent = _make_agent(workspace=ws)
+    mock_fn, wf_config = _make_workflow_config("read_file")
+    config = AgentConfig(
+        name="A", system_prompt="s", model="m", workflows={"read_file": wf_config}
+    )
+    agent = Agent(config=config)
 
     first = _make_response(
-        content=None, tool_calls=[_make_tool_call("read_file", '{"path":"f.txt"}')]
+        content=None, tool_calls=[_make_tool_call("read_file", '{"value": 1}')]
     )
     second = _make_response(content="The file says: file data")
 
     with patch("litellm.acompletion", AsyncMock(side_effect=[first, second])):
-        result = await agent._generate_raw("Read f.txt")
+        result = await agent._generate_raw("Read f.txt", _make_context())
 
     assert result == "The file says: file data"
-    ws.execute_tool.assert_awaited_once_with("read_file", {"path": "f.txt"})
+    mock_fn.assert_awaited_once()
 
 
 async def test_generate_raw_returns_tool_result_when_no_content_after_tool_cycle():
     """Gemini may return content=None after executing tools; agent should return last tool result."""
-    ws = MagicMock()
-    ws.get_tools.return_value = [
-        {"type": "function", "function": {"name": "read_file"}}
-    ]
-    ws.get_system_prompt_additions.return_value = ""
-    ws.execute_tool = AsyncMock(return_value="raw file content")
+    mock_fn, wf_config = _make_workflow_config("read_file")
+    config = AgentConfig(
+        name="A", system_prompt="s", model="m", workflows={"read_file": wf_config}
+    )
+    agent = Agent(config=config)
 
-    agent = _make_agent(workspace=ws)
-
-    first = _make_response(content=None, tool_calls=[_make_tool_call()])
+    first = _make_response(
+        content=None, tool_calls=[_make_tool_call("read_file", '{"value": 1}')]
+    )
     second = _make_response(content=None, tool_calls=None)
 
     with patch("litellm.acompletion", AsyncMock(side_effect=[first, second])):
-        result = await agent._generate_raw("Read it")
+        result = await agent._generate_raw("Read it", _make_context())
 
-    assert result == "raw file content"
+    assert result == _WfOutput(result="doubled").model_dump_json()
 
 
 async def test_generate_raw_max_iterations_raises():
-    ws = MagicMock()
-    ws.get_tools.return_value = [{"type": "function", "function": {"name": "loop"}}]
-    ws.get_system_prompt_additions.return_value = ""
-    ws.execute_tool = AsyncMock(return_value='{"ok": true}')
-
-    agent = _make_agent(workspace=ws)
+    _, wf_config = _make_workflow_config("loop")
+    config = AgentConfig(
+        name="A", system_prompt="s", model="m", workflows={"loop": wf_config}
+    )
+    agent = Agent(config=config)
     always_tool = _make_response(
-        content=None, tool_calls=[_make_tool_call("loop", "{}")]
+        content=None, tool_calls=[_make_tool_call("loop", '{"value": 1}')]
     )
 
     with patch("litellm.acompletion", AsyncMock(return_value=always_tool)):
         with pytest.raises(RuntimeError, match="exceeded"):
-            await agent._generate_raw("Loop forever")
+            await agent._generate_raw("Loop forever", _make_context())
 
 
 # ---------------------------------------------------------------------------
@@ -406,22 +376,120 @@ async def test_generate_structured_async_invalid_json_raises():
 
 
 async def test_stream_async_max_iterations_raises():
-    ws = MagicMock()
-    ws.get_tools.return_value = [{"type": "function", "function": {"name": "loop"}}]
-    ws.get_system_prompt_additions.return_value = ""
-    ws.execute_tool = AsyncMock(return_value='{"ok": true}')
-
-    agent = _make_agent(workspace=ws)
+    _, wf_config = _make_workflow_config("loop")
+    config = AgentConfig(
+        name="A", system_prompt="s", model="m", workflows={"loop": wf_config}
+    )
+    agent = Agent(config=config)
 
     def _tool_chunk():
         tc_delta = MagicMock()
         tc_delta.index = 0
         tc_delta.id = "c1"
         tc_delta.function.name = "loop"
-        tc_delta.function.arguments = "{}"
+        tc_delta.function.arguments = '{"value": 1}'
         return _AsyncChunks([_make_stream_chunk(tool_calls=[tc_delta])])
 
     with patch("litellm.acompletion", AsyncMock(side_effect=lambda **_: _tool_chunk())):
         with pytest.raises(RuntimeError, match="exceeded"):
             async for _ in agent.stream_async("Hi", _make_context()):
                 pass
+
+
+# ---------------------------------------------------------------------------
+# Workflows as tools
+# ---------------------------------------------------------------------------
+
+
+class _WfInput(BaseModel):
+    value: int
+
+
+class _WfOutput(BaseModel):
+    result: str
+
+
+def _make_workflow_config(name: str = "double") -> tuple[AsyncMock, WorkflowConfig]:
+    mock_fn: AsyncMock = AsyncMock(return_value=_WfOutput(result="doubled"))
+    config = WorkflowConfig.create(
+        name=name,
+        input_schema=_WfInput,
+        output_schema=_WfOutput,
+        steps={
+            name: WorkflowStepConfig.create(
+                name=name,
+                input_schema=_WfInput,
+                output_schema=_WfOutput,
+                execute=mock_fn,
+            )
+        },
+    )
+    return mock_fn, config
+
+
+def test_workflow_to_tool_schema():
+    wf = MagicMock()
+    wf.config.name = "my_workflow"
+    wf.config.input_schema = _WfInput
+    tool = _workflow_to_tool("my_workflow", wf)
+
+    assert tool["type"] == "function"
+    assert tool["function"]["name"] == "my_workflow"
+    assert "my_workflow" in tool["function"]["description"]
+    params = tool["function"]["parameters"]
+    assert params["type"] == "object"
+    assert "value" in params["properties"]
+
+
+async def test_agent_with_workflow_tool_invokes_workflow():
+    mock_fn, wf_config = _make_workflow_config("double")
+    config = AgentConfig(
+        name="A", system_prompt="s", model="m", workflows={"double": wf_config}
+    )
+    agent = Agent(config=config)
+
+    first = _make_response(
+        content=None,
+        tool_calls=[_make_tool_call("double", '{"value": 5}')],
+    )
+    second = _make_response(content="The result is doubled")
+
+    with patch("litellm.acompletion", AsyncMock(side_effect=[first, second])):
+        result = await agent._generate_raw("Double 5", _make_context())
+
+    assert result == "The result is doubled"
+    mock_fn.assert_awaited_once()
+    call_args = mock_fn.call_args
+    assert call_args[0][0].value == 5
+
+
+async def test_agent_workflow_tool_appears_in_tool_list():
+    _, wf_config = _make_workflow_config("summarise")
+    config = AgentConfig(
+        name="A", system_prompt="s", model="m", workflows={"summarise": wf_config}
+    )
+    agent = Agent(config=config)
+
+    tools = agent._get_tools()
+    assert tools is not None
+    names = [t["function"]["name"] for t in tools]
+    assert "summarise" in names
+
+
+async def test_dispatch_tool_raises_without_context_for_workflow():
+    _, wf_config = _make_workflow_config("run")
+    config = AgentConfig(
+        name="A", system_prompt="s", model="m", workflows={"run": wf_config}
+    )
+    agent = Agent(config=config)
+
+    with pytest.raises(RuntimeError, match="no AppContext"):
+        await agent._dispatch_tool("run", {"value": 1}, None)
+
+
+async def test_dispatch_tool_raises_for_unknown_tool():
+    config = AgentConfig(name="A", system_prompt="s", model="m")
+    agent = Agent(config=config)
+
+    with pytest.raises(RuntimeError, match="not found"):
+        await agent._dispatch_tool("unknown", {}, _make_context())
