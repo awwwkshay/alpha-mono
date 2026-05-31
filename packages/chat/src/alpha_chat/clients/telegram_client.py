@@ -17,7 +17,6 @@ class TelegramClient:
             await self._bot.send_message(chat_id=chat_id, text=text)
 
     async def set_webhook(self, url: str) -> None:
-        logger.info(f"Setting Telegram webhook to {url}")
         async with self._bot:
             await self._bot.set_webhook(url=url)
 

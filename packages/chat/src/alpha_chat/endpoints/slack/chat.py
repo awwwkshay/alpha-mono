@@ -39,9 +39,15 @@ class SlackChat(ChatContract):
         adapter = SlackAdapter(
             agent=agent, context=app.context, slack_client=slack_client
         )
+        self._agent_id = agent_id
         prefix = f"/slack/{agent_id}"
-        logger.info(f"Mounting Slack endpoints at {prefix}/{{events,commands,actions}}")
         app.mount_router(build_slack_router(adapter), prefix=prefix)
+
+    async def setup(self) -> None:
+        base = os.environ.get("PUBLIC_URL", "").rstrip("/")
+        prefix = f"/slack/{self._agent_id}"
+        base_url = f"{base}{prefix}" if base else prefix
+        logger.info(f"Slack handlers listening at {base_url}/{{events,commands,actions}}")
 
 
 __all__ = ["SlackChat"]

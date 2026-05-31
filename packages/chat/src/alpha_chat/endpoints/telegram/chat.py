@@ -51,15 +51,14 @@ class TelegramChat(ChatContract):
             agent=agent, context=app.context, telegram_client=self._client
         )
         prefix = f"/telegram/{agent_id}"
-        logger.info(f"Mounting Telegram endpoint at {prefix}/webhook")
         app.mount_router(build_telegram_router(adapter), prefix=prefix)
 
     async def setup(self) -> None:
         base = self.base_url or os.environ.get(_PUBLIC_URL_ENV)
         if base:
             url = f"{base.rstrip('/')}/telegram/{self._agent_id}/webhook"
-            logger.info(f"Registering Telegram webhook: {url}")
             await self._client.set_webhook(url)
+            logger.info(f"Telegram handlers listening at {url}")
 
 
 __all__ = ["TelegramChat"]
