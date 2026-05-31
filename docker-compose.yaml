@@ -1,4 +1,76 @@
 services:
+  elasticsearch:
+    image: elasticsearch:8.17.0
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+      - xpack.security.enabled=true
+      - xpack.security.http.ssl.enabled=false
+      - xpack.security.transport.ssl.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf -u elastic:${ELASTIC_PASSWORD} http://localhost:9200/_cluster/health | grep -v '\"status\":\"red\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  es-setup:
+    image: elasticsearch:8.17.0
+    container_name: es-setup
+    environment:
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+      - KIBANA_PASSWORD=${KIBANA_PASSWORD}
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    restart: on-failure
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        curl -s -X POST -u "elastic:$$ELASTIC_PASSWORD" \
+          http://elasticsearch:9200/_security/user/kibana_system/_password \
+          -H 'Content-Type: application/json' \
+          -d "{\"password\": \"$$KIBANA_PASSWORD\"}" \
+        && echo "kibana_system password set"
+
+  kibana:
+    image: kibana:8.17.0
+    container_name: kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - ELASTICSEARCH_USERNAME=kibana_system
+      - ELASTICSEARCH_PASSWORD=${KIBANA_PASSWORD}
+      - XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY=a7a6311933d3503b89bc2dbc36572c33a6c10925682e591bffcab6911c06786d
+      - XPACK_SECURITY_ENCRYPTIONKEY=a7a6311933d3503b89bc2dbc36572c33a6c10925682e591bffcab6911c06786d
+      - XPACK_REPORTING_ENCRYPTIONKEY=a7a6311933d3503b89bc2dbc36572c33a6c10925682e591bffcab6911c06786d
+    ports:
+      - "5601:5601"
+    depends_on:
+      es-setup:
+        condition: service_completed_successfully
+
+  jaeger:
+    image: jaegertracing/jaeger:latest
+    container_name: jaeger
+    environment:
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+    command: ["--config=/etc/jaeger/config.yaml"]
+    volumes:
+      - ./jaeger-config.yaml:/etc/jaeger/config.yaml:ro
+      - ./jaeger-ui.json:/etc/jaeger/ui-config.json:ro
+    ports:
+      - "16686:16686" # UI
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+
   litellm:
     image: litellm/litellm:latest
     container_name: litellm
@@ -10,13 +82,5 @@ services:
       - LITELLM_NUM_THREADS=4
     restart: unless-stopped
 
-  jaeger:
-    image: jaegertracing/all-in-one:latest
-    container_name: jaeger
-    environment:
-      - COLLECTOR_OTLP_ENABLED=true
-    ports:
-      - "16686:16686" # UI
-      - "4317:4317"   # OTLP gRPC
-      - "4318:4318"   # OTLP HTTP
-
+volumes:
+  elasticsearch_data:

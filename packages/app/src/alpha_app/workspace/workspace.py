@@ -11,8 +11,19 @@ from litellm.types.llms.openai import (
 )
 from pydantic import BaseModel
 from opentelemetry import trace
+from opentelemetry.trace import Status, StatusCode
 
-from alpha_core.log import logger
+from alpha_app.constants.otel_constants import (
+    ERROR_MESSAGE,
+    ERROR_TYPE,
+    SPAN_WORKSPACE_TOOL,
+    WORKSPACE_NAME,
+    WORKSPACE_TOOL_CATEGORY,
+    WORKSPACE_TOOL_ERROR,
+    WORKSPACE_TOOL_SUCCESS,
+)
+
+from alpha_app.log import logger
 
 from alpha_core.contracts.workspace.file_system_contract import FileSystemContract
 from alpha_core.contracts.workspace.sandbox_contract import SandboxContract
@@ -344,6 +355,27 @@ def _build_sandbox(config: LocalSandboxConfig | E2BSandboxConfig) -> SandboxCont
 # ---------------------------------------------------------------------------
 
 
+_tracer = trace.get_tracer(__name__)
+
+_TOOL_CATEGORIES: dict[str, str] = {
+    "read_file": "filesystem",
+    "write_file": "filesystem",
+    "edit_file": "filesystem",
+    "list_directory": "filesystem",
+    "delete_file": "filesystem",
+    "delete_directory": "filesystem",
+    "copy_file": "filesystem",
+    "move_file": "filesystem",
+    "mkdir": "filesystem",
+    "grep": "filesystem",
+    "stat": "filesystem",
+    "execute_command": "sandbox",
+    "get_process_output": "sandbox",
+    "kill_process": "sandbox",
+    "read_skill_file": "skill",
+}
+
+
 class Workspace:
     def __init__(self, config: WorkspaceConfig) -> None:
         self.config = config
@@ -376,17 +408,28 @@ class Workspace:
         return tools
 
     async def execute_tool(self, name: str, arguments: dict) -> str:
-        tracer = trace.get_tracer(__name__)
         logger.debug(f"Workspace executing tool '{name}'")
-        with tracer.start_as_current_span(
-            f"Workspace.execute_tool/{name}",
-            attributes={"tool_name": name},
-        ):
+        category = _TOOL_CATEGORIES.get(name, "unknown")
+        with _tracer.start_as_current_span(
+            f"{SPAN_WORKSPACE_TOOL}/{name}",
+            attributes={
+                WORKSPACE_NAME: self.config.name,
+                WORKSPACE_TOOL_CATEGORY: category,
+                "tool.name": name,
+            },
+        ) as span:
             try:
                 result: Any = await self._dispatch(name, arguments)
                 if isinstance(result, BaseModel):
                     result = result.model_dump()
+                span.set_attribute(WORKSPACE_TOOL_SUCCESS, True)
             except Exception as exc:
+                span.record_exception(exc)
+                span.set_status(Status(StatusCode.ERROR, str(exc)))
+                span.set_attribute(WORKSPACE_TOOL_SUCCESS, False)
+                span.set_attribute(WORKSPACE_TOOL_ERROR, str(exc))
+                span.set_attribute(ERROR_TYPE, type(exc).__name__)
+                span.set_attribute(ERROR_MESSAGE, str(exc))
                 result = {"error": str(exc)}
             return json.dumps(result)
 

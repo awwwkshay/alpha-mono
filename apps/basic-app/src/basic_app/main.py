@@ -11,28 +11,24 @@ from alpha_app import (
     AppConfig,
     LocalFilesystemConfig,
     LocalSandboxConfig,
+    ObservabilityConfig,
     WorkspaceConfig,
 )
-from opentelemetry import trace
-from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
-from opentelemetry.sdk.resources import Resource
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
 from basic_app.agents import AGENTS
 from basic_app.doc_gen import DOC_GEN_WORKFLOW, create_doc_gen_agents
 from basic_app.evals import print_eval_results, run_parser_evals
 from basic_app.workflows import REVIEW_WORKFLOW
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+_handler = logging.StreamHandler()
+_handler.setFormatter(
+    logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 )
-
-resource = Resource(attributes={"service.name": "alpha-basic-app"})
-provider = TracerProvider(resource=resource)
-otlp_exporter = OTLPSpanExporter(endpoint="http://localhost:4317", insecure=True)
-provider.add_span_processor(BatchSpanProcessor(otlp_exporter))
-trace.set_tracer_provider(provider)
+for _name in ("alpha_core", "alpha_app", "alpha_chat", "basic_app"):
+    _log = logging.getLogger(_name)
+    _log.setLevel(logging.INFO)
+    _log.handlers = [_handler]
+    _log.propagate = False
 
 ENV_FILE = Path(__file__).parents[2] / ".env"
 WORKSPACE_DIR = Path(__file__).parents[2] / "test_workspace"
@@ -41,6 +37,7 @@ _SOURCE_DIR = Path(__file__).parent
 APP_CONFIG = AppConfig(
     name="basic-app",
     env_file=ENV_FILE,
+    observability=ObservabilityConfig(endpoint="http://localhost:4317"),
     agents={
         **AGENTS,
         **create_doc_gen_agents(_SOURCE_DIR),
@@ -73,20 +70,21 @@ APP = AlphaApp(config=APP_CONFIG)
 
 
 async def run_review() -> None:
-    result = await APP.execute_workflow(
-        "review",
-        {
-            "language": "Python",
-            "code": dedent("""
-                from collections import Counter
-                from pathlib import Path
+    async with APP:
+        result = await APP.execute_workflow(
+            "review",
+            {
+                "language": "Python",
+                "code": dedent("""
+                    from collections import Counter
+                    from pathlib import Path
 
-                def count_chars(filename: str) -> list[tuple[str, int]]:
-                    data = Path(filename).read_text()
-                    return Counter(data).most_common()
-            """).strip(),
-        },
-    )
+                    def count_chars(filename: str) -> list[tuple[str, int]]:
+                        data = Path(filename).read_text()
+                        return Counter(data).most_common()
+                """).strip(),
+            },
+        )
 
     print(f"\nVerdict: {result.verdict}")
     print("\nPriority Issues:")
@@ -98,7 +96,8 @@ async def run_review() -> None:
 
 
 async def run_evals_demo() -> None:
-    results = await run_parser_evals(APP.agents["parser"], APP.context)
+    async with APP:
+        results = await run_parser_evals(APP.agents["parser"], APP.context)
     print_eval_results(results)
 
 

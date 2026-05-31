@@ -1,0 +1,62 @@
+service:
+  extensions:
+    - jaeger_storage
+    - jaeger_query
+  pipelines:
+    traces:
+      receivers:
+        - otlp
+      processors:
+        - batch
+      exporters:
+        - jaeger_storage_exporter
+
+extensions:
+  jaeger_storage:
+    backends:
+      esstore:
+        elasticsearch:
+          server_urls:
+            - http://elastic:${ELASTIC_PASSWORD}@elasticsearch:9200
+          indices:
+            index_prefix: jaeger
+            spans:
+              date_layout: "2006-01-02"
+              rollover_frequency: day
+              shards: 1
+              replicas: 0
+            services:
+              date_layout: "2006-01-02"
+              rollover_frequency: day
+              shards: 1
+              replicas: 0
+            dependencies:
+              date_layout: "2006-01-02"
+              rollover_frequency: day
+              shards: 1
+              replicas: 0
+            sampling:
+              date_layout: "2006-01-02"
+              rollover_frequency: day
+              shards: 1
+              replicas: 0
+  jaeger_query:
+    storage:
+      traces: esstore
+    ui:
+      config_file: /etc/jaeger/ui-config.json
+
+processors:
+  batch:
+
+exporters:
+  jaeger_storage_exporter:
+    trace_storage: esstore
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318

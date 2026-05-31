@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import logging
 from html.parser import HTMLParser
 from typing import TYPE_CHECKING
 
@@ -11,10 +10,10 @@ from pydantic import BaseModel, Field
 
 from alpha_app import AgentTool
 
+from personal_agent.log import logger
+
 if TYPE_CHECKING:
     from alpha_app import AppContext
-
-logger = logging.getLogger("personal_agent")
 
 
 class WebSearchInput(BaseModel):

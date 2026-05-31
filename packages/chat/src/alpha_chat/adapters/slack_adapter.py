@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, cast
 
+from opentelemetry import trace
+from opentelemetry.trace import SpanKind, Status, StatusCode
+
 from alpha_core.schemas.app_context import AppContext
 
 if TYPE_CHECKING:
@@ -18,6 +21,8 @@ _TOOL_STATUS: dict[str, str] = {
     "summarise_url": "is reading the page...",
     "get_current_datetime": "is checking the time...",
 }
+
+_tracer = trace.get_tracer(__name__)
 
 
 class SlackAdapter:
@@ -54,38 +59,55 @@ class SlackAdapter:
         key = self._conversation_key(event)
         history = self._history.get(key, [])
 
-        logger.info(f"SlackAdapter handling message event in channel={channel}")
+        with _tracer.start_as_current_span(
+            "chat.slack.event",
+            kind=SpanKind.SERVER,
+            attributes={
+                "chat.platform": "slack",
+                "chat.channel": channel,
+                "chat.thread_ts": thread_ts,
+                "chat.has_history": bool(history),
+            },
+        ) as span:
+            span.set_attribute("user.prompt", text)
+            span.add_event("chat.user.message", {"content": text, "channel": channel})
+            logger.info(f"SlackAdapter handling message event in channel={channel}")
 
-        await self._set_status(channel, thread_ts, "is thinking...")
+            await self._set_status(channel, thread_ts, "is thinking...")
 
-        async def _on_tool_start(tool_name: str) -> None:
-            status = _TOOL_STATUS.get(tool_name, f"is calling {tool_name}...")
-            await self._set_status(channel, thread_ts, status)
+            async def _on_tool_start(tool_name: str) -> None:
+                status = _TOOL_STATUS.get(tool_name, f"is calling {tool_name}...")
+                await self._set_status(channel, thread_ts, status)
 
-        try:
-            response = await self._agent.generate_async(
-                text, self._context, history=history, on_tool_start=_on_tool_start
+            try:
+                response = await self._agent.generate_async(
+                    text, self._context, history=history, on_tool_start=_on_tool_start
+                )
+            except Exception as exc:
+                logger.error(f"Agent error in channel={channel}: {exc}")
+                span.record_exception(exc)
+                span.set_status(Status(StatusCode.ERROR, str(exc)))
+                await self._set_status(channel, thread_ts, "")
+                await self._slack_client.send_message(
+                    channel,
+                    "Sorry, I ran into an error. Please try again.",
+                    thread_ts=thread_ts,
+                )
+                return
+
+            span.set_attribute("agent.response", response)
+            span.add_event("chat.assistant.message", {"content": response, "channel": channel})
+
+            updated = history + cast(
+                "list[AllMessageValues]",
+                [
+                    {"role": "user", "content": text},
+                    {"role": "assistant", "content": response},
+                ],
             )
-        except Exception as exc:
-            logger.error(f"Agent error in channel={channel}: {exc}")
-            await self._set_status(channel, thread_ts, "")
-            await self._slack_client.send_message(
-                channel,
-                "Sorry, I ran into an error. Please try again.",
-                thread_ts=thread_ts,
-            )
-            return
+            self._history[key] = updated[-(2 * _MAX_HISTORY_TURNS):]
 
-        updated = history + cast(
-            "list[AllMessageValues]",
-            [
-                {"role": "user", "content": text},
-                {"role": "assistant", "content": response},
-            ],
-        )
-        self._history[key] = updated[-(2 * _MAX_HISTORY_TURNS) :]
-
-        await self._slack_client.send_message(channel, response, thread_ts=thread_ts)
+            await self._slack_client.send_message(channel, response, thread_ts=thread_ts)
 
     async def _set_status(self, channel: str, thread_ts: str, status: str) -> None:
         try:
@@ -95,19 +117,55 @@ class SlackAdapter:
 
     async def handle_command(self, command: SlackCommand) -> None:
         text = command.text or command.command
-        logger.info(f"SlackAdapter handling command={command.command}")
-        response = await self._agent.generate_async(text, self._context)
-        await self._slack_client.ack_slash_command(command.response_url, response)
+        with _tracer.start_as_current_span(
+            "chat.slack.command",
+            kind=SpanKind.SERVER,
+            attributes={
+                "chat.platform": "slack",
+                "chat.command": command.command,
+                "chat.channel": command.channel_id or "",
+                "chat.user": command.user_id or "",
+            },
+        ) as span:
+            span.set_attribute("user.prompt", text)
+            span.add_event("chat.user.message", {"content": text, "command": command.command})
+            logger.info(f"SlackAdapter handling command={command.command}")
+            try:
+                response = await self._agent.generate_async(text, self._context)
+            except Exception as exc:
+                span.record_exception(exc)
+                span.set_status(Status(StatusCode.ERROR, str(exc)))
+                raise
+            span.set_attribute("agent.response", response)
+            span.add_event("chat.assistant.message", {"content": response})
+            await self._slack_client.ack_slash_command(command.response_url, response)
 
     async def handle_action(self, action: SlackAction) -> None:
         action_values = " ".join(
             str(a.get("value", a.get("action_id", ""))) for a in action.actions
         )
         text = f"Action triggered: {action_values}"
-        logger.info(f"SlackAdapter handling action type={action.type}")
-        response = await self._agent.generate_async(text, self._context)
-        if action.response_url:
-            await self._slack_client.ack_slash_command(action.response_url, response)
+        with _tracer.start_as_current_span(
+            "chat.slack.action",
+            kind=SpanKind.SERVER,
+            attributes={
+                "chat.platform": "slack",
+                "chat.action_type": action.type,
+            },
+        ) as span:
+            span.set_attribute("user.prompt", text)
+            span.add_event("chat.user.message", {"content": text, "action_type": action.type})
+            logger.info(f"SlackAdapter handling action type={action.type}")
+            try:
+                response = await self._agent.generate_async(text, self._context)
+            except Exception as exc:
+                span.record_exception(exc)
+                span.set_status(Status(StatusCode.ERROR, str(exc)))
+                raise
+            span.set_attribute("agent.response", response)
+            span.add_event("chat.assistant.message", {"content": response})
+            if action.response_url:
+                await self._slack_client.ack_slash_command(action.response_url, response)
 
 
 __all__ = ["SlackAdapter"]

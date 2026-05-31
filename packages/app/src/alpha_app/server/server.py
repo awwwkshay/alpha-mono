@@ -4,7 +4,7 @@ from collections.abc import AsyncIterator, Callable, Coroutine
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, Any
 
-from alpha_core.log import logger
+from alpha_app.log import logger
 from alpha_core.schemas.server_config import CorsConfig, ServerConfig
 
 if TYPE_CHECKING:

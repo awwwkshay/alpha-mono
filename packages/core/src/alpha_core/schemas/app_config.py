@@ -3,6 +3,7 @@ from pathlib import Path
 from pydantic import BaseModel, Field
 
 from alpha_core.schemas.agent_config import AgentConfig
+from alpha_core.schemas.observability_config import ObservabilityConfig
 from alpha_core.schemas.server_config import ServerConfig
 from alpha_core.schemas.workflow_config import WorkflowConfig
 from alpha_core.schemas.workspace_config import WorkspaceConfig
@@ -40,6 +41,14 @@ class AppConfig(BaseModel):
     server: ServerConfig | None = Field(
         default=None,
         description="HTTP server configuration. Required to call AlphaApp.serve().",
+    )
+    observability: ObservabilityConfig | None = Field(
+        default=None,
+        description=(
+            "OpenTelemetry tracing configuration. When set, AlphaApp automatically "
+            "configures a TracerProvider with an OTLP gRPC exporter pointed at the "
+            "given endpoint. Service name defaults to AppConfig.name."
+        ),
     )
     debug: bool = Field(
         default=False,

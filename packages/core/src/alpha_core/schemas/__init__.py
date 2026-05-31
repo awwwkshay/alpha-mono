@@ -1,5 +1,6 @@
 from alpha_core.schemas.agent_config import AgentConfig
 from alpha_core.schemas.app_config import AppConfig
+from alpha_core.schemas.observability_config import ObservabilityConfig
 from alpha_core.schemas.app_context import AppContext
 from alpha_core.schemas.filesystem import FileStat
 from alpha_core.schemas.filesystem_config import (
@@ -40,6 +41,7 @@ __all__ = [
     "FilesystemConfig",
     "LocalFilesystemConfig",
     "LocalSandboxConfig",
+    "ObservabilityConfig",
     "ParallelWorkflowStepConfig",
     "ProcessOutput",
     "S3FilesystemConfig",

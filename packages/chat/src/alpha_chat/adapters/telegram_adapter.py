@@ -1,11 +1,17 @@
 from __future__ import annotations
 
 from typing import Any
+
+from opentelemetry import trace
+from opentelemetry.trace import SpanKind, Status, StatusCode
+
 from alpha_core.schemas.app_context import AppContext
 
 from alpha_chat.clients.telegram_client import TelegramClient
 from alpha_chat.log import logger
 from alpha_chat.schemas.telegram import TelegramUpdate
+
+_tracer = trace.get_tracer(__name__)
 
 
 class TelegramAdapter:
@@ -28,16 +34,33 @@ class TelegramAdapter:
             return
         chat_id = message.chat.id
         text = message.text
-        logger.info(f"TelegramAdapter handling message in chat_id={chat_id}")
-        try:
-            response = await self._agent.generate_async(text, self._context)
-        except Exception as exc:
-            logger.error(f"Agent error for chat_id={chat_id}: {exc}")
-            await self._telegram_client.send_message(
-                chat_id, "Sorry, I ran into an error. Please try again."
-            )
-            return
-        await self._telegram_client.send_message(chat_id, response)
+
+        with _tracer.start_as_current_span(
+            "chat.telegram.message",
+            kind=SpanKind.SERVER,
+            attributes={
+                "chat.platform": "telegram",
+                "chat.chat_id": str(chat_id),
+                "chat.user_id": str(message.from_.id) if message.from_ else "",
+                "chat.is_edit": update.edited_message is not None,
+            },
+        ) as span:
+            span.set_attribute("user.prompt", text)
+            span.add_event("chat.user.message", {"content": text, "chat_id": str(chat_id)})
+            logger.info(f"TelegramAdapter handling message in chat_id={chat_id}")
+            try:
+                response = await self._agent.generate_async(text, self._context)
+            except Exception as exc:
+                logger.error(f"Agent error for chat_id={chat_id}: {exc}")
+                span.record_exception(exc)
+                span.set_status(Status(StatusCode.ERROR, str(exc)))
+                await self._telegram_client.send_message(
+                    chat_id, "Sorry, I ran into an error. Please try again."
+                )
+                return
+            span.set_attribute("agent.response", response)
+            span.add_event("chat.assistant.message", {"content": response, "chat_id": str(chat_id)})
+            await self._telegram_client.send_message(chat_id, response)
 
 
 __all__ = ["TelegramAdapter"]

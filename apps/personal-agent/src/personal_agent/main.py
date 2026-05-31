@@ -9,22 +9,13 @@ _handler = logging.StreamHandler(sys.stdout)
 _handler.setFormatter(
     logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 )
-for _name in (
-    "alpha_core",
-    "alpha_chat",
-    "personal_agent",
-    "uvicorn",
-    "uvicorn.access",
-    "uvicorn.error",
-):
+_APP_LOGGERS = ("alpha_core", "alpha_app", "alpha_chat", "personal_agent")
+_UVICORN_LOGGERS = ("uvicorn", "uvicorn.access", "uvicorn.error")
+
+for _name in (*_APP_LOGGERS, *_UVICORN_LOGGERS):
     _log = logging.getLogger(_name)
-    _log.setLevel(
-        logging.DEBUG
-        if _name not in ("uvicorn", "uvicorn.access", "uvicorn.error")
-        else logging.INFO
-    )
-    _log.handlers = []
-    _log.addHandler(_handler)
+    _log.setLevel(logging.DEBUG if _name in _APP_LOGGERS else logging.INFO)
+    _log.handlers = [_handler]
     _log.propagate = False
 
 
