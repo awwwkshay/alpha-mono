@@ -23,7 +23,7 @@ from opentelemetry import trace
 
 from alpha_core.log import logger
 from alpha_core.domain.agent.tool.agent_tool import AgentTool
-from alpha_core.domain.evals.runner import run_scorers
+from alpha_app.evals.runner import run_scorers
 from alpha_core.contracts.evals.scorer_contract import ScorerResult
 from alpha_core.schemas.agent_config import AgentConfig
 from alpha_core.schemas.app_context import AppContext
@@ -31,7 +31,7 @@ from alpha_core.schemas.app_context import AppContext
 if TYPE_CHECKING:
     from litellm.litellm_core_utils.streaming_handler import CustomStreamWrapper
     from litellm.types.utils import ModelResponse
-    from alpha_core.domain.workflow.workflow import Workflow
+    from alpha_app.workflow.workflow import Workflow
 
 AgentConfig.model_rebuild()
 
@@ -88,7 +88,7 @@ class Agent:
     config: AgentConfig
 
     def __init__(self, *, config: AgentConfig) -> None:
-        from alpha_core.domain.workflow.workflow import Workflow as _Workflow
+        from alpha_app.workflow.workflow import Workflow as _Workflow
 
         self.config = config
         self._workflows: dict[str, _Workflow] = {

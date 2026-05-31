@@ -5,12 +5,14 @@ import logging
 from pathlib import Path
 from textwrap import dedent
 
-from alpha_core.domain.app.app import AlphaApp
-from alpha_core.schemas.agent_config import AgentConfig
-from alpha_core.schemas.app_config import AppConfig
-from alpha_core.schemas.filesystem_config import LocalFilesystemConfig
-from alpha_core.schemas.sandbox_config import LocalSandboxConfig
-from alpha_core.schemas.workspace_config import WorkspaceConfig
+from alpha_app import (
+    AgentConfig,
+    AlphaApp,
+    AppConfig,
+    LocalFilesystemConfig,
+    LocalSandboxConfig,
+    WorkspaceConfig,
+)
 from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
 from opentelemetry.sdk.resources import Resource

@@ -2,11 +2,16 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from alpha_core.domain.evals.runner import EvalCase, EvalResult, run_evals
-from alpha_core.contracts.evals.scorer_contract import Scorer
-from alpha_core.domain.evals.scorers import AnswerRelevancyScorer, CompletenessScorer
-from alpha_core.domain.agent.agent import Agent
-from alpha_core.schemas.app_context import AppContext
+from alpha_app import (
+    Agent,
+    AnswerRelevancyScorer,
+    AppContext,
+    CompletenessScorer,
+    EvalCase,
+    EvalResult,
+    Scorer,
+    run_evals,
+)
 
 _EVAL_MODEL = "gemini/gemini-2.0-flash"
 _SOURCE_DIR = Path(__file__).parents[3]

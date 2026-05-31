@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from alpha_core.domain.agent.agent import Agent
+from typing import Any
 from alpha_core.schemas.app_context import AppContext
 
 from alpha_chat.clients.telegram_client import TelegramClient
@@ -14,7 +14,7 @@ class TelegramAdapter:
     def __init__(
         self,
         *,
-        agent: Agent,
+        agent: Any,
         context: AppContext,
         telegram_client: TelegramClient,
     ) -> None:

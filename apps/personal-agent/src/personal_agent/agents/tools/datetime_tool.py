@@ -5,10 +5,10 @@ from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
 
-from alpha_core.domain.agent.tool.agent_tool import AgentTool
+from alpha_app import AgentTool
 
 if TYPE_CHECKING:
-    from alpha_core.schemas.app_context import AppContext
+    from alpha_app import AppContext
 
 
 class GetDatetimeInput(BaseModel):

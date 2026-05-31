@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, cast
 
-from alpha_core.domain.agent.agent import Agent
 from alpha_core.schemas.app_context import AppContext
 
 if TYPE_CHECKING:
@@ -27,7 +26,7 @@ class SlackAdapter:
     def __init__(
         self,
         *,
-        agent: Agent,
+        agent: Any,
         context: AppContext,
         slack_client: SlackClient,
     ) -> None:

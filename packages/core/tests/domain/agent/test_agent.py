@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from pydantic import BaseModel
 
-from alpha_core.domain.agent.agent import (
+from alpha_app.agent.agent import (
     Agent,
     _accumulate_tool_call_delta,
     _workflow_to_tool,

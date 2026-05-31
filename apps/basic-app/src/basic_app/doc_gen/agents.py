@@ -2,11 +2,14 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from alpha_core.contracts.evals.scorer_contract import ScorerConfig
-from alpha_core.domain.evals.scorers import AnswerRelevancyScorer, CompletenessScorer
-from alpha_core.schemas.agent_config import AgentConfig
-from alpha_core.schemas.filesystem_config import LocalFilesystemConfig
-from alpha_core.schemas.workspace_config import WorkspaceConfig
+from alpha_app import (
+    AgentConfig,
+    AnswerRelevancyScorer,
+    CompletenessScorer,
+    LocalFilesystemConfig,
+    ScorerConfig,
+    WorkspaceConfig,
+)
 
 _PROMPTS_DIR = Path(__file__).parents[3] / "prompts"
 _EVAL_MODEL = "gemini/gemini-2.0-flash"

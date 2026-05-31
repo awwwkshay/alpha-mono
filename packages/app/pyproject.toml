@@ -1,0 +1,23 @@
+[project]
+name = "alpha-app"
+version = "0.1.0"
+description = "Domain implementations for the Alpha ecosystem (agents, workflows, workspace, evals)."
+readme = "README.md"
+authors = [{ name = "Akshay Priyadarshi", email = "akshayp1904@outlook.com" }]
+requires-python = ">=3.14"
+dependencies = ["alpha-core", "alpha-chat", "litellm>=1.86.0", "opentelemetry-api>=1.24.0", "pydantic>=2.13.4", "python-dotenv>=1.2.2"]
+
+[tool.uv.sources]
+alpha-core = { workspace = true }
+alpha-chat = { workspace = true }
+
+[tool.uv.build-backend]
+module-name = "alpha_app"
+
+[build-system]
+requires = ["uv_build>=0.11.16,<0.12.0"]
+build-backend = "uv_build"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

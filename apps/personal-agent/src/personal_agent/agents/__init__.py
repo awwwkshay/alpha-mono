@@ -1,5 +1,5 @@
 from __future__ import annotations
 
-from personal_agent.agents.jarvis import jarvis
+from personal_agent.agents.personal_agent import personal_agent, personal_agent_config
 
-__all__ = ["jarvis"]
+__all__ = ["personal_agent_config", "personal_agent"]

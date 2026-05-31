@@ -8,14 +8,10 @@ import httpx
 from ddgs import DDGS
 from pydantic import BaseModel, Field
 
-from alpha_core.schemas.workflow_config import (
-    ParallelWorkflowStepConfig,
-    WorkflowConfig,
-    WorkflowStepConfig,
-)
+from alpha_app import ParallelWorkflowStepConfig, WorkflowConfig, WorkflowStepConfig
 
 if TYPE_CHECKING:
-    from alpha_core.schemas.app_context import AppContext
+    from alpha_app import AppContext
 
 
 class ResearchInput(BaseModel):

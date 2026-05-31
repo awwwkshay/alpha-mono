@@ -9,14 +9,12 @@ description = "Personal AI assistant connected to Slack"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
-    "alpha-core",
-    "alpha-chat",
+    "alpha-app",
     "ddgs>=0.5.0",
 ]
 
 [tool.uv.sources]
-alpha-core = { workspace = true }
-alpha-chat = { workspace = true }
+alpha-app = { workspace = true }
 
 [project.scripts]
 personal-agent = "personal_agent.main:run"

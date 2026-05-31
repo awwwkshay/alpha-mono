@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from alpha_core.domain.app.app import AlphaApp
+from alpha_app.app.app import AlphaApp
 from alpha_core.schemas.agent_config import AgentConfig
 from alpha_core.schemas.app_config import AppConfig
 from alpha_core.schemas.filesystem_config import LocalFilesystemConfig
@@ -37,7 +37,7 @@ def _agent_cfg(
 
 def test_init_creates_agents():
     config = _simple_config(agents={"a": _agent_cfg("A"), "b": _agent_cfg("B")})
-    with patch("alpha_core.domain.app.app.load_dotenv"):
+    with patch("alpha_app.app.app.load_dotenv"):
         app = AlphaApp(config=config)
     assert set(app.agents.keys()) == {"a", "b"}
 
@@ -63,14 +63,14 @@ def test_init_creates_workflows(tmp_path):
     )
 
     config = _simple_config(workflows={"wf": wf})
-    with patch("alpha_core.domain.app.app.load_dotenv"):
+    with patch("alpha_app.app.app.load_dotenv"):
         app = AlphaApp(config=config)
     assert "wf" in app.workflows
 
 
 def test_init_builds_context():
     config = _simple_config(agents={"a": _agent_cfg("A")})
-    with patch("alpha_core.domain.app.app.load_dotenv"):
+    with patch("alpha_app.app.app.load_dotenv"):
         app = AlphaApp(config=config)
     assert "a" in app.context.agents
     assert app.context.config is config
@@ -91,7 +91,7 @@ def test_global_workspace_shared_across_agents(tmp_path):
         agents={"a": _agent_cfg("A"), "b": _agent_cfg("B")},
         workspace=ws_cfg,
     )
-    with patch("alpha_core.domain.app.app.load_dotenv"):
+    with patch("alpha_app.app.app.load_dotenv"):
         app = AlphaApp(config=config)
     # Only one unique workspace instance despite two agents
     assert len(app._workspaces) == 1
@@ -110,7 +110,7 @@ def test_per_agent_workspace_overrides_global(tmp_path):
         agents={"a": _agent_cfg("A", workspace=agent_ws), "b": _agent_cfg("B")},
         workspace=global_ws,
     )
-    with patch("alpha_core.domain.app.app.load_dotenv"):
+    with patch("alpha_app.app.app.load_dotenv"):
         app = AlphaApp(config=config)
     # Two distinct workspace instances
     assert len(app._workspaces) == 2
@@ -130,7 +130,7 @@ async def test_setup_calls_workspace_setup(tmp_path):
         agents={"a": _agent_cfg("A")},
         workspace=ws_cfg,
     )
-    with patch("alpha_core.domain.app.app.load_dotenv"):
+    with patch("alpha_app.app.app.load_dotenv"):
         app = AlphaApp(config=config)
 
     with patch.object(list(app._workspaces)[0], "setup", AsyncMock()) as mock_setup:
@@ -147,7 +147,7 @@ async def test_teardown_calls_workspace_teardown(tmp_path):
         agents={"a": _agent_cfg("A")},
         workspace=ws_cfg,
     )
-    with patch("alpha_core.domain.app.app.load_dotenv"):
+    with patch("alpha_app.app.app.load_dotenv"):
         app = AlphaApp(config=config)
 
     with patch.object(list(app._workspaces)[0], "teardown", AsyncMock()) as mock_td:
@@ -164,7 +164,7 @@ async def test_context_manager_calls_setup_and_teardown(tmp_path):
         agents={"a": _agent_cfg("A")},
         workspace=ws_cfg,
     )
-    with patch("alpha_core.domain.app.app.load_dotenv"):
+    with patch("alpha_app.app.app.load_dotenv"):
         app = AlphaApp(config=config)
 
     ws = list(app._workspaces)[0]
@@ -203,7 +203,7 @@ async def test_execute_workflow_delegates_to_workflow():
     )
 
     config = _simple_config(workflows={"wf": wf})
-    with patch("alpha_core.domain.app.app.load_dotenv"):
+    with patch("alpha_app.app.app.load_dotenv"):
         app = AlphaApp(config=config)
 
     result = await app.execute_workflow("wf", {"v": 3})
@@ -212,7 +212,7 @@ async def test_execute_workflow_delegates_to_workflow():
 
 async def test_execute_workflow_unknown_id_raises():
     config = _simple_config()
-    with patch("alpha_core.domain.app.app.load_dotenv"):
+    with patch("alpha_app.app.app.load_dotenv"):
         app = AlphaApp(config=config)
     with pytest.raises(KeyError):
         await app.execute_workflow("no_such_workflow", {})

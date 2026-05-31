@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock
 
-from alpha_core.domain.evals.runner import EvalCase, EvalResult, run_evals, run_scorers
+from alpha_app.evals.runner import EvalCase, EvalResult, run_evals, run_scorers
 from alpha_core.contracts.evals.scorer_contract import (
     Scorer,
     SamplingConfig,

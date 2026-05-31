@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from alpha_core.domain.workspace.file_systems.local_file_system import LocalFileSystem
+from alpha_app.workspace.file_systems.local_file_system import LocalFileSystem
 
 
 # ---------------------------------------------------------------------------

@@ -12,7 +12,7 @@ from alpha_core.contracts.evals.scorer_contract import (
 )
 
 if TYPE_CHECKING:
-    from alpha_core.domain.agent.agent import Agent
+    from alpha_app.agent.agent import Agent
     from alpha_core.schemas.app_context import AppContext
 
 

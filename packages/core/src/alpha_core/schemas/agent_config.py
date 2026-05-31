@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from alpha_core.contracts.chat_contract import ChatContract
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from alpha_core.contracts.evals.scorer_contract import ScorerConfig
@@ -44,6 +45,14 @@ class AgentConfig(BaseModel):
     scorers: dict[str, ScorerConfig] = Field(
         default_factory=dict,
         description="Named scorers to evaluate agent responses.",
+    )
+    chat: list[ChatContract] = Field(
+        default_factory=list,
+        description=(
+            "Chat-platform integrations (alpha_chat.contracts.ChatContract). "
+            "Each has its mount(app, agent) called by AlphaApp at startup. "
+            "Add one per platform (e.g. [SlackChat(), TelegramChat()])."
+        ),
     )
 
     @model_validator(mode="before")

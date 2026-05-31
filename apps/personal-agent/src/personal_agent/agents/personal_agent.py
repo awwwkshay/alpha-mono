@@ -2,8 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from alpha_core.domain.agent.agent import Agent
-from alpha_core.schemas.agent_config import AgentConfig
+from alpha_app import Agent, AgentConfig, SlackChat
 
 from personal_agent.agents.tools.datetime_tool import get_datetime_tool
 from personal_agent.agents.tools.summarise_url_tool import summarise_url_tool
@@ -13,7 +12,7 @@ from personal_agent.workflows.research_summarise import research_summarise_workf
 
 _PROMPT_PATH = Path(__file__).parents[2] / "prompts" / "jarvis.md"
 
-_config = AgentConfig(
+personal_agent_config = AgentConfig(
     name="Jarvis",
     system_prompt_md_path=_PROMPT_PATH,
     model="gemini/gemini-flash-latest",
@@ -26,8 +25,9 @@ _config = AgentConfig(
         "daily_brief": daily_brief_workflow,
         "research_summarise": research_summarise_workflow,
     },
+    chat=[SlackChat()],
 )
 
-jarvis = Agent(config=_config)
+personal_agent = Agent(config=personal_agent_config)
 
-__all__ = ["jarvis"]
+__all__ = ["personal_agent_config", "personal_agent"]

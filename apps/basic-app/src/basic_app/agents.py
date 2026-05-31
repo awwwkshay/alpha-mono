@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-from alpha_core.contracts.evals.scorer_contract import SamplingConfig, ScorerConfig
-from alpha_core.domain.evals.scorers import (
+from alpha_app import (
+    AgentConfig,
     AnswerRelevancyScorer,
     CompletenessScorer,
+    SamplingConfig,
+    ScorerConfig,
     ToxicityScorer,
 )
-from alpha_core.schemas.agent_config import AgentConfig
 
 EVAL_MODEL = "gemini/gemini-2.0-flash"
 

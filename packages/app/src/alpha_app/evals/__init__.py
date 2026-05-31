@@ -1,11 +1,5 @@
-from alpha_core.domain.evals.runner import EvalCase, EvalResult, run_evals, run_scorers
-from alpha_core.contracts.evals.scorer_contract import (
-    SamplingConfig,
-    Scorer,
-    ScorerConfig,
-    ScorerResult,
-)
-from alpha_core.domain.evals.scorers import (
+from alpha_app.evals.runner import EvalCase, EvalResult, run_evals, run_scorers
+from alpha_app.evals.scorers import (
     AnswerRelevancyScorer,
     BiasScorer,
     CompletenessScorer,
@@ -24,10 +18,6 @@ __all__ = [
     "FaithfulnessScorer",
     "HallucinationScorer",
     "KeywordCoverageScorer",
-    "SamplingConfig",
-    "Scorer",
-    "ScorerConfig",
-    "ScorerResult",
     "ToxicityScorer",
     "run_evals",
     "run_scorers",

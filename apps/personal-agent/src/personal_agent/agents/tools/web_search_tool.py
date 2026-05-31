@@ -9,10 +9,10 @@ import httpx
 from ddgs import DDGS
 from pydantic import BaseModel, Field
 
-from alpha_core.domain.agent.tool.agent_tool import AgentTool
+from alpha_app import AgentTool
 
 if TYPE_CHECKING:
-    from alpha_core.schemas.app_context import AppContext
+    from alpha_app import AppContext
 
 logger = logging.getLogger("personal_agent")
 

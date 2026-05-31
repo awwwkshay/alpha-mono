@@ -1,3 +1,4 @@
 [environment]
 python-version = "3.14"
-extra-paths = ["packages/core/src", "packages/chat/src", "apps/basic-app/src", "apps/personal-agent/src"]
+python = ".venv"
+extra-paths = ["packages/core/src", "packages/app/src", "packages/chat/src", "apps/basic-app/src", "apps/personal-agent/src"]

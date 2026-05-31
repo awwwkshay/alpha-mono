@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from alpha_core.domain.workspace.workspace import Workspace, _load_skills
+from alpha_app.workspace.workspace import Workspace, _load_skills
 from alpha_core.schemas.filesystem_config import LocalFilesystemConfig
 from alpha_core.schemas.sandbox_config import LocalSandboxConfig
 from alpha_core.schemas.workspace_config import WorkspaceConfig

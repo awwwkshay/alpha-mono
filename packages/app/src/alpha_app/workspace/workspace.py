@@ -16,10 +16,10 @@ from alpha_core.log import logger
 
 from alpha_core.contracts.workspace.file_system_contract import FileSystemContract
 from alpha_core.contracts.workspace.sandbox_contract import SandboxContract
-from alpha_core.domain.workspace.file_systems.local_file_system import LocalFileSystem
-from alpha_core.domain.workspace.file_systems.s3_file_system import S3FileSystem
-from alpha_core.domain.workspace.sandboxes.e2b_sandbox import E2BSandbox
-from alpha_core.domain.workspace.sandboxes.local_sandbox import LocalSandbox
+from alpha_app.workspace.file_systems.local_file_system import LocalFileSystem
+from alpha_app.workspace.file_systems.s3_file_system import S3FileSystem
+from alpha_app.workspace.sandboxes.e2b_sandbox import E2BSandbox
+from alpha_app.workspace.sandboxes.local_sandbox import LocalSandbox
 from alpha_core.schemas.filesystem_config import (
     LocalFilesystemConfig,
     S3FilesystemConfig,
