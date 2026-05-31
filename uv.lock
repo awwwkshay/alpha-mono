@@ -91,6 +91,7 @@ source = { editable = "packages/app" }
 dependencies = [
     { name = "alpha-chat" },
     { name = "alpha-core" },
+    { name = "httpx" },
     { name = "litellm" },
     { name = "opentelemetry-api" },
     { name = "opentelemetry-exporter-otlp-proto-grpc" },
@@ -103,6 +104,7 @@ dependencies = [
 requires-dist = [
     { name = "alpha-chat", editable = "packages/chat" },
     { name = "alpha-core", editable = "packages/core" },
+    { name = "httpx", specifier = ">=0.27.0" },
     { name = "litellm", specifier = ">=1.86.0" },
     { name = "opentelemetry-api", specifier = ">=1.24.0" },
     { name = "opentelemetry-exporter-otlp-proto-grpc", specifier = ">=1.24.0" },
@@ -164,6 +166,11 @@ source = { virtual = "." }
 
 [package.dev-dependencies]
 dev = [
+    { name = "alpha-app" },
+    { name = "alpha-chat" },
+    { name = "alpha-core" },
+    { name = "basic-app" },
+    { name = "personal-agent" },
     { name = "pre-commit" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
@@ -175,6 +182,11 @@ dev = [
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "alpha-app", editable = "packages/app" },
+    { name = "alpha-chat", editable = "packages/chat" },
+    { name = "alpha-core", editable = "packages/core" },
+    { name = "basic-app", editable = "apps/basic-app" },
+    { name = "personal-agent", editable = "apps/personal-agent" },
     { name = "pre-commit", specifier = ">=4.6.0" },
     { name = "pytest", specifier = ">=9.0.3" },
     { name = "pytest-asyncio", specifier = ">=1.4.0" },
@@ -1171,6 +1183,7 @@ source = { editable = "apps/personal-agent" }
 dependencies = [
     { name = "alpha-app" },
     { name = "ddgs" },
+    { name = "httpx" },
     { name = "pydantic" },
 ]
 
@@ -1178,6 +1191,7 @@ dependencies = [
 requires-dist = [
     { name = "alpha-app", editable = "packages/app" },
     { name = "ddgs", specifier = ">=0.5.0" },
+    { name = "httpx", specifier = ">=0.27.0" },
     { name = "pydantic", specifier = ">=2.13.4" },
 ]
 
