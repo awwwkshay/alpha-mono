@@ -31,7 +31,7 @@ def _format_field_errors(error: ValidationError, schema: type[BaseModel]) -> str
         field = schema.model_fields.get(field_name)
         expected_type = (
             field.annotation.__name__
-            if field and hasattr(field.annotation, "__name__")
+            if field and field.annotation is not None and hasattr(field.annotation, "__name__")
             else str(field.annotation)
             if field
             else "unknown"
