@@ -56,7 +56,11 @@ def build_events_router(adapter: SlackAdapter) -> APIRouter:
                     _SEEN_EVENT_IDS.clear()
 
             event = payload.get("event", {})
-            if event.get("type") == "message" and not event.get("bot_id"):
+            if (
+                event.get("type") == "message"
+                and not event.get("bot_id")
+                and not event.get("subtype")
+            ):
                 logger.info(f"Slack message event from user={event.get('user')}")
                 asyncio.create_task(adapter.handle_event(event))
 

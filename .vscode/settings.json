@@ -12,7 +12,7 @@
     "python.languageServer": "Pylance",
     "ruff.enable": true,
     "ruff.lint.enable": true,
-    "ty.disableLanguageServices": true,
+    "ty.disableLanguageServices": false,
     "ty.diagnosticMode": "workspace",
     "ty.importStrategy": "fromEnvironment",
     "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
