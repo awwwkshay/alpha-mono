@@ -2,7 +2,7 @@
 
 ## Overview
 
-alpha-python is structured around three layers:
+alpha-mono is structured around three layers:
 
 ```text
 ┌─────────────────────────────────────────────┐

@@ -1,6 +1,6 @@
 # alpha-core
 
-Core framework package for alpha-python. Provides the building blocks for defining and running AI agent workflows: agents, workflows, workspaces, config schemas, and pluggable filesystem/sandbox backends.
+Core framework package for alpha-mono. Provides the building blocks for defining and running AI agent workflows: agents, workflows, workspaces, config schemas, and pluggable filesystem/sandbox backends.
 
 ## Installation
 

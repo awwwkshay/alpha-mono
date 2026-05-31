@@ -1,4 +1,4 @@
-# alpha-python — Claude instructions
+# alpha-mono — Claude instructions
 
 ## Skill usage
 

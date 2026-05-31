@@ -1,4 +1,4 @@
-# alpha-python
+# alpha-mono
 
 A Python framework for building and orchestrating AI agent workflows. Define agents, compose them into typed workflows with sequential, parallel, and conditional steps, and give them a sandboxed workspace to read/write files and run commands.
 
@@ -26,7 +26,7 @@ Schemas are [Pydantic](https://docs.pydantic.dev/) models — step inputs and ou
 ## Repo layout
 
 ```text
-alpha-python/
+alpha-mono/
 ├── packages/
 │   └── core/               # alpha-core — the framework
 │       └── src/alpha_core/

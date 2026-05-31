@@ -1,5 +1,5 @@
 [project]
-name = "alpha-python"
+name = "alpha-mono"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
@@ -8,11 +8,11 @@ dependencies = []
 
 [dependency-groups]
 dev = [
-    "pre-commit>=4.6.0",
-    "pytest>=9.0.3",
-    "pytest-asyncio>=1.4.0",
-    "ruff>=0.15.14",
-    "ty>=0.0.39",
+"pre-commit>=4.6.0",
+"pytest>=9.0.3",
+"pytest-asyncio>=1.4.0",
+"ruff>=0.15.14",
+"ty>=0.0.39",
 ]
 
 [tool.pytest.ini_options]

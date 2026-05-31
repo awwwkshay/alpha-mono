@@ -1,5 +1,5 @@
 def main():
-    print("Hello from alpha-python!")
+    print("Hello from alpha-mono!")
 
 
 if __name__ == "__main__":
