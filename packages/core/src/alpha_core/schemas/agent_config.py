@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
+from typing import Any, Sequence
 
 from alpha_core.contracts.chat_contract import ChatContract
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -46,7 +46,7 @@ class AgentConfig(BaseModel):
         default_factory=dict,
         description="Named scorers to evaluate agent responses.",
     )
-    chat: list[ChatContract] = Field(
+    chat: Sequence[ChatContract] = Field(
         default_factory=list,
         description=(
             "Chat-platform integrations (alpha_chat.contracts.ChatContract). "

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from alpha_app import Agent, AgentConfig, SlackChat
+from alpha_app import Agent, AgentConfig, SlackChat, TelegramChat
 
 from personal_agent.agents.tools.datetime_tool import get_datetime_tool
 from personal_agent.agents.tools.summarise_url_tool import summarise_url_tool
@@ -25,7 +25,7 @@ personal_agent_config = AgentConfig(
         "daily_brief": daily_brief_workflow,
         "research_summarise": research_summarise_workflow,
     },
-    chat=[SlackChat()],
+    chat=[SlackChat(), TelegramChat()],
 )
 
 personal_agent = Agent(config=personal_agent_config)

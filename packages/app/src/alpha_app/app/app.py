@@ -71,10 +71,12 @@ class AlphaApp:
         if not server_cfg.title:
             server_cfg = server_cfg.model_copy(update={"title": config.name})
         self.server = Server(config=server_cfg)
+        self.server.add_startup(self.setup)
+        self.server.add_teardown(self.teardown)
 
         for agent_app_id, agent_config in self.config.agents.items():
             for chat_integration in agent_config.chat:
-                chat_integration.mount(self, self.agents[agent_app_id])
+                chat_integration.mount(self, self.agents[agent_app_id], agent_app_id)
 
     async def setup(self) -> None:
         logger.debug(
@@ -82,6 +84,9 @@ class AlphaApp:
         )
         for workspace in self._workspaces:
             await workspace.setup()
+        for agent_config in self.config.agents.values():
+            for chat_integration in agent_config.chat:
+                await chat_integration.setup()
         logger.info(f"App '{self.config.name}' setup complete")
 
     async def teardown(self) -> None:
@@ -97,8 +102,8 @@ class AlphaApp:
     async def __aexit__(self, *_: object) -> None:
         await self.teardown()
 
-    def mount_router(self, router: APIRouter) -> None:
-        self.server.mount_router(router)
+    def mount_router(self, router: APIRouter, prefix: str = "") -> None:
+        self.server.mount_router(router, prefix=prefix)
 
     def serve(self) -> None:
         logger.info(f"Starting server for '{self.config.name}'")

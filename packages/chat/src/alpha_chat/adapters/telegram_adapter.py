@@ -29,7 +29,14 @@ class TelegramAdapter:
         chat_id = message.chat.id
         text = message.text
         logger.info(f"TelegramAdapter handling message in chat_id={chat_id}")
-        response = await self._agent.generate_async(text, self._context)
+        try:
+            response = await self._agent.generate_async(text, self._context)
+        except Exception as exc:
+            logger.error(f"Agent error for chat_id={chat_id}: {exc}")
+            await self._telegram_client.send_message(
+                chat_id, "Sorry, I ran into an error. Please try again."
+            )
+            return
         await self._telegram_client.send_message(chat_id, response)
 
 

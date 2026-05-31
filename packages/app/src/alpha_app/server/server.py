@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from collections.abc import AsyncIterator, Callable, Coroutine
+from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, Any
 
 from alpha_core.log import logger
@@ -9,16 +11,26 @@ if TYPE_CHECKING:
     from fastapi import FastAPI
     from fastapi import APIRouter
 
+_LifespanCallback = Callable[[], Coroutine[Any, Any, None]]
+
 
 class Server:
     """Owns FastAPI app creation, middleware wiring, router mounting, and serving."""
 
     def __init__(self, *, config: ServerConfig) -> None:
         self.config = config
-        self._routers: list[APIRouter] = []
+        self._routers: list[tuple[APIRouter, str]] = []
+        self._on_startup: list[_LifespanCallback] = []
+        self._on_teardown: list[_LifespanCallback] = []
 
-    def mount_router(self, router: APIRouter) -> None:
-        self._routers.append(router)
+    def mount_router(self, router: APIRouter, prefix: str = "") -> None:
+        self._routers.append((router, prefix))
+
+    def add_startup(self, callback: _LifespanCallback) -> None:
+        self._on_startup.append(callback)
+
+    def add_teardown(self, callback: _LifespanCallback) -> None:
+        self._on_teardown.append(callback)
 
     def build(self) -> FastAPI:
         from fastapi import FastAPI
@@ -27,18 +39,30 @@ class Server:
         docs_url = "/docs" if cfg.swagger_ui_enabled and cfg.openapi_enabled else None
         openapi_url = "/openapi.json" if cfg.openapi_enabled else None
 
+        on_startup = list(self._on_startup)
+        on_teardown = list(self._on_teardown)
+
+        @asynccontextmanager
+        async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+            for cb in on_startup:
+                await cb()
+            yield
+            for cb in on_teardown:
+                await cb()
+
         app = FastAPI(
             title=cfg.title or "AlphaApp",
             docs_url=docs_url,
             openapi_url=openapi_url,
+            lifespan=lifespan,
         )
 
         self._add_cors(app)
         self._add_timeout(app)
         self._add_body_size_limit(app)
 
-        for router in self._routers:
-            app.include_router(router)
+        for router, prefix in self._routers:
+            app.include_router(router, prefix=prefix)
 
         return app
 

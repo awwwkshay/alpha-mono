@@ -5,10 +5,11 @@ from alpha_chat.endpoints.slack import (
     build_events_router,
     build_slack_router,
 )
-from alpha_chat.endpoints.telegram import build_telegram_router
+from alpha_chat.endpoints.telegram import TelegramChat, build_telegram_router
 
 __all__ = [
     "SlackChat",
+    "TelegramChat",
     "build_actions_router",
     "build_commands_router",
     "build_events_router",

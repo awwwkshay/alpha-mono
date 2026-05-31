@@ -3,10 +3,9 @@ from __future__ import annotations
 import asyncio
 from typing import TYPE_CHECKING
 
+from alpha_app import ParallelWorkflowStepConfig, WorkflowConfig, WorkflowStepConfig
 from ddgs import DDGS
 from pydantic import BaseModel, Field
-
-from alpha_app import ParallelWorkflowStepConfig, WorkflowConfig, WorkflowStepConfig
 
 if TYPE_CHECKING:
     from alpha_app import AppContext
