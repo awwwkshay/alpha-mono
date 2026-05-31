@@ -1,10 +1,12 @@
 # basic-app
 
-Example application built on `alpha-core`. Demonstrates a multi-agent code review pipeline using all three workflow step types: sequential, parallel, and conditional.
+Example application built on `alpha-app`. Demonstrates a multi-agent code review pipeline using all three workflow step types — sequential, parallel, and conditional — plus an agent with a sandboxed workspace and a documentation generation workflow.
 
 ## What it does
 
-Takes a code snippet and runs it through a five-agent pipeline:
+### Code review workflow
+
+Takes a code snippet and routes it through a five-agent pipeline:
 
 ```text
 CodeReview
@@ -24,26 +26,25 @@ CodeSummary
         └── standard → ReviewReport   (medium / low)
 ```
 
+### Doc-gen workflow
+
+Reads a source file from the workspace filesystem and generates structured documentation for it using a two-step pipeline (read → document).
+
+### Eval demo
+
+Runs LLM-graded evaluations on the `parser` agent using a suite of test cases and scorers.
+
 ## Usage
 
-### Run the code review workflow
-
 ```bash
+# Run the code review workflow
 uv run basic-app
-```
 
-Or directly:
+# Run the eval demo
+uv run eval-demo
 
-```bash
-uv run --package basic-app python -m basic_app.main
-```
-
-### Run the workspace demo
-
-Demonstrates an agent with a local filesystem and sandbox — writes a Python file, runs it, and reports the output.
-
-```bash
-uv run workspace-demo
+# Run the documentation generation workflow
+uv run doc-gen
 ```
 
 ## Setup
@@ -64,19 +65,28 @@ cp .env.example .env
 | `performance_reviewer` | Flags algorithmic and memory inefficiencies                  |
 | `style_reviewer`       | Reviews naming, readability, and best practices              |
 | `report_writer`        | Synthesises findings into a structured report                |
+| `coder`                | Writes and runs Python in a sandboxed local workspace        |
 
 ## Structure
 
 ```text
 basic-app/
 ├── src/basic_app/
-│   └── main.py          # workflow definition and entry points
-└── test_workspace/      # working directory used by the workspace demo
+│   ├── main.py          # AppConfig, entry points
+│   ├── schemas.py       # Pydantic models for the review pipeline
+│   ├── agents.py        # Agent configs
+│   ├── workflows.py     # Workflow config
+│   ├── steps.py         # Step implementations
+│   ├── evals.py         # Eval cases and runner
+│   └── doc_gen/         # Documentation generation subapp
+│       ├── agents.py
+│       ├── workflows.py
+│       ├── steps.py
+│       └── schemas.py
+└── test_workspace/      # Working directory used by the coder agent
 ```
 
 ## See also
 
-- [alpha-core](../../packages/core/README.md) — the framework this app is built on
+- [alpha-app](../../packages/app/README.md) — the framework this app is built on
 - [Architecture](../../docs/architecture.md) — how workflows and agents work
-
-Last updated: 2026-05-27

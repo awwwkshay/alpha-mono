@@ -1,13 +1,15 @@
 # alpha-core
 
-Core framework package for alpha-mono. Provides the building blocks for defining and running AI agent workflows: agents, workflows, workspaces, config schemas, and pluggable filesystem/sandbox backends.
+The type layer for the alpha-mono framework. Provides schemas (Pydantic config models), contracts (abstract interfaces for pluggable backends), and shared types used across all packages.
+
+> **Note:** `alpha-core` defines the interfaces. Concrete implementations of `Agent`, `AlphaApp`, `Workflow`, and `Workspace` live in [`alpha-app`](../app/README.md).
 
 ## Installation
 
 This package is consumed as a workspace dependency. From the repo root:
 
 ```bash
-uv sync
+uv sync --all-packages
 ```
 
 To build a distributable wheel:
@@ -18,37 +20,38 @@ uv build --package alpha-core
 
 ## What's in this package
 
-### Domain
-
-| Module                        | What it provides                                                              |
-| ----------------------------- | ----------------------------------------------------------------------------- |
-| `alpha_core.domain.app`       | `AlphaApp` — top-level container, owns agents, workflows, workspaces          |
-| `alpha_core.domain.agent`     | `Agent` — wraps a litellm model call with a tool-use loop                     |
-| `alpha_core.domain.workflow`  | `Workflow`, `WorkflowStep`, `ParallelWorkflowStep`, `ConditionalWorkflowStep` |
-| `alpha_core.domain.workspace` | `Workspace` — composes filesystem, sandbox, and skills                        |
-
 ### Schemas (config models)
 
 | Schema                          | Purpose                                                |
 | ------------------------------- | ------------------------------------------------------ |
 | `AppConfig`                     | Top-level app configuration                            |
-| `AgentConfig`                   | Model, system prompt, and optional per-agent workspace |
-| `WorkflowConfig`                | Typed step pipeline with chain validation              |
+| `AgentConfig`                   | Model, system prompt, tools, workflows, chat integrations, and optional per-agent workspace |
+| `WorkflowConfig`                | Typed step pipeline with chain validation at construction time |
 | `WorkflowStepConfig`            | Single async step                                      |
 | `ParallelWorkflowStepConfig`    | Fan-out to concurrent branches, merge outputs          |
 | `ConditionalWorkflowStepConfig` | Route to one branch based on a condition               |
 | `WorkspaceConfig`               | Filesystem + sandbox + skills config                   |
 | `LocalFilesystemConfig`         | Local disk filesystem backend                          |
-| `S3FilesystemConfig`            | S3 filesystem backend (stub)                           |
+| `S3FilesystemConfig`            | S3 filesystem backend                                  |
 | `LocalSandboxConfig`            | Local subprocess sandbox                               |
-| `E2BSandboxConfig`              | E2B cloud sandbox (stub)                               |
+| `E2BSandboxConfig`              | E2B cloud sandbox                                      |
+| `ServerConfig`                  | Host and port for the built-in FastAPI server          |
+| `AppContext`                    | Read-only context bag passed to every workflow step    |
 
 ### Contracts (extension interfaces)
 
-| Contract             | Implement to add a custom backend   |
-| -------------------- | ----------------------------------- |
-| `FileSystemContract` | Pluggable filesystem backend        |
-| `SandboxContract`    | Pluggable command execution backend |
+| Contract             | Implement to add a custom backend       |
+| -------------------- | --------------------------------------- |
+| `FileSystemContract` | Pluggable filesystem backend            |
+| `SandboxContract`    | Pluggable command execution backend     |
+| `Scorer`             | Custom eval scorer                      |
+
+### Other exports
+
+| Export       | Purpose                                              |
+| ------------ | ---------------------------------------------------- |
+| `AgentTool`  | Wrap a Python function as an LLM-callable tool       |
+| `logger`     | Shared logger (`alpha_core`)                         |
 
 ## Dependencies
 
@@ -60,7 +63,6 @@ uv build --package alpha-core
 
 ## See also
 
+- [alpha-app](../app/README.md) — concrete implementations built on these interfaces
 - [Architecture](../../docs/architecture.md) — detailed design of all components
 - [Development](../../docs/development.md) — setup and tooling
-
-Last updated: 2026-05-27

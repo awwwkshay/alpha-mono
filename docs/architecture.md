@@ -18,6 +18,11 @@ alpha-mono is structured around three layers:
 
 Everything is configured via Pydantic models (`AppConfig`, `WorkflowConfig`, `AgentConfig`, `WorkspaceConfig`) and validated at construction time — schema mismatches are errors before any LLM call is made.
 
+The codebase is split across two packages:
+
+- **`alpha-core`** — schemas, contracts, and shared types (the interface layer)
+- **`alpha-app`** — concrete implementations: `AlphaApp`, `Agent`, `Workflow`, `Workspace`, `Evals`
+
 ---
 
 ## AlphaApp
@@ -32,6 +37,7 @@ Everything is configured via Pydantic models (`AppConfig`, `WorkflowConfig`, `Ag
 4. Deduplicates workspace instances (so the global workspace is only set up once).
 5. Instantiates `Agent` and `Workflow` objects.
 6. Constructs `AppContext` — the read-only bag passed to every workflow step.
+7. Sets up the FastAPI server and mounts any chat integrations declared in agent configs.
 
 ### Lifecycle
 
@@ -100,12 +106,10 @@ while iterations < MAX_TOOL_ITERATIONS:
     call LLM with messages + tools
     if no tool calls → return content
     for each tool call:
-        execute via workspace.execute_tool(name, args)
+        dispatch to workspace tool or workflow
         append tool result to messages
 raise RuntimeError  # iteration limit exceeded
 ```
-
-The `context: AppContext` parameter is available for future use (e.g. accessing other agents or workflows from within a step).
 
 ### Structured output
 
@@ -124,15 +128,7 @@ result: Summary = await agent.generate_structured_async(prompt, context, Summary
 Tools come from two sources that are merged at call time:
 
 1. **Workspace tools** — if a `Workspace` is configured, its `get_tools()` method returns filesystem/sandbox/skill tool schemas.
-2. **Workflow tools** — any `Workflow` instances passed via `Agent(workflows={...})` are exposed as tools. The schema is auto-generated from the workflow's `input_schema` Pydantic model using `model_json_schema()`.
-
-```python
-agent = Agent(
-    config=config,
-    workspace=my_workspace,
-    workflows={"run_pipeline": my_workflow},
-)
-```
+2. **Workflow tools** — any `Workflow` instances passed via `AgentConfig(workflows={...})` are exposed as tools. The schema is auto-generated from the workflow's `input_schema` Pydantic model using `model_json_schema()`.
 
 When the LLM calls a workflow tool, the agent validates the arguments against `workflow.config.input_schema`, calls `workflow.execute(input_data, context)`, and injects the serialised output back into the message loop. Workspace tools and workflow tools coexist — the agent dispatches to the correct handler based on the tool name.
 
@@ -170,7 +166,7 @@ Tools exposed to the LLM:
 
 ### Sandbox
 
-Backed by a `SandboxContract` implementation. `LocalSandbox` runs subprocesses on the host machine with an optional isolation wrapper (`seatbelt` on macOS, `bwrap` on Linux). `E2BSandbox` is a stub for cloud execution (not yet implemented).
+Backed by a `SandboxContract` implementation. `LocalSandbox` runs subprocesses on the host machine with an optional isolation wrapper (`seatbelt` on macOS, `bwrap` on Linux). `E2BSandbox` provides cloud execution via the E2B platform.
 
 Tools exposed to the LLM:
 
@@ -197,14 +193,7 @@ skills/
 
 ### Custom filesystem backend
 
-Subclass `FileSystemContract` and implement all abstract methods. Pass an instance via a custom config:
-
-```python
-class MyFilesystemConfig(FilesystemConfig):
-    ...
-
-# In workspace.py _build_filesystem, add handling for MyFilesystemConfig
-```
+Subclass `FileSystemContract` and implement all abstract methods. Pass an instance via a custom config that `Workspace` recognises.
 
 ### Custom sandbox backend
 
@@ -217,19 +206,21 @@ Subclass `SandboxContract` and implement `setup`, `teardown`, `execute_command`,
 The `packages/chat` package (`alpha_chat`) provides:
 
 - **Clients** — thin async wrappers over official SDKs:
-  - `SlackClient` — wraps `slack_sdk.WebClient`: `send_message`, `react`, `open_modal`, `ack_slash_command`
-  - `TelegramClient` — wraps `python-telegram-bot`: `send_message`, `set_webhook`, `delete_webhook`
-  - `GithubClient` — wraps `PyGithub`: `get_repo`, `create_issue`, `list_prs`
+  - `SlackClient` — `send_message`, `set_status`, `react`, `open_modal`, `ack_slash_command`
+  - `TelegramClient` — `send_message`, `set_webhook`, `delete_webhook`
+  - `GithubClient` — `get_repo`, `create_issue`, `list_prs`
 
-- **Endpoints** — FastAPI `APIRouter` builders, one per platform. All Slack endpoints verify `X-Slack-Signature` HMAC before processing:
-  - `build_slack_router(adapter)` — mounts `/events`, `/commands`, `/actions`
-  - `build_telegram_router(adapter)` — mounts `/webhook`
+- **Endpoints** — FastAPI `APIRouter` builders. All Slack endpoints verify `X-Slack-Signature` HMAC before processing:
+  - `build_slack_router(adapter)` — mounts `POST /events`, `POST /commands`, `POST /actions`
+  - `build_telegram_router(adapter)` — mounts `POST /webhook`
 
 - **Adapters** — bridge layer between platform events and an `Agent`:
-  - `SlackAdapter(agent, context, slack_client)` — `handle_event`, `handle_command`, `handle_action`
+  - `SlackAdapter(agent, context, slack_client)` — `handle_event`, `handle_command`, `handle_action`; maintains per-conversation history; shows typing status
   - `TelegramAdapter(agent, context, telegram_client)` — `handle_update`
 
-**Wiring pattern:**
+- **`SlackChat`** — declarative integration. Add to `AgentConfig.chat` and `AlphaApp` mounts the router automatically.
+
+**Wiring pattern (manual):**
 
 ```python
 slack_client = SlackClient(token=..., signing_secret=...)
@@ -245,26 +236,10 @@ app.include_router(build_slack_router(adapter), prefix="/slack")
 
 ```text
 packages/core/src/alpha_core/
-├── domain/
-│   ├── app/
-│   │   └── app.py               # AlphaApp
-│   ├── agent/
-│   │   ├── agent.py             # Agent, tool-use loop, workflow tool dispatch
-│   │   └── tool/agent_tool.py
-│   ├── workflow/
-│   │   └── workflow.py          # Workflow, WorkflowStep, Parallel, Conditional
-│   └── workspace/
-│       ├── workspace.py         # Workspace, tool dispatch, skills
-│       ├── file_systems/
-│       │   ├── local_file_system.py
-│       │   └── s3_file_system.py   # stub
-│       └── sandboxes/
-│           ├── local_sandbox.py
-│           └── e2b_sandbox.py      # stub
 ├── schemas/
 │   ├── app_config.py
 │   ├── agent_config.py
-│   ├── workflow_config.py       # WorkflowConfig + step configs + validation
+│   ├── workflow_config.py       # WorkflowConfig + step configs + chain validation
 │   ├── workspace_config.py
 │   ├── filesystem_config.py
 │   ├── sandbox_config.py
@@ -276,6 +251,32 @@ packages/core/src/alpha_core/
 └── types/
     └── app_id.py
 
+packages/app/src/alpha_app/
+├── app/
+│   └── app.py                   # AlphaApp
+├── agent/
+│   └── agent.py                 # Agent, tool-use loop, structured output
+├── workflow/
+│   └── workflow.py              # Workflow, step execution
+├── workspace/
+│   ├── workspace.py             # Workspace, tool dispatch, skills
+│   ├── file_systems/
+│   │   ├── local_file_system.py
+│   │   └── s3_file_system.py
+│   └── sandboxes/
+│       ├── local_sandbox.py
+│       └── e2b_sandbox.py
+└── evals/
+    ├── runner.py
+    └── scorers/
+        ├── answer_relevancy.py
+        ├── bias.py
+        ├── completeness.py
+        ├── faithfulness.py
+        ├── hallucination.py
+        ├── keyword_coverage.py
+        └── toxicity.py
+
 packages/chat/src/alpha_chat/
 ├── clients/
 │   ├── slack_client.py          # SlackClient
@@ -283,7 +284,7 @@ packages/chat/src/alpha_chat/
 │   └── github_client.py         # GithubClient
 ├── endpoints/
 │   ├── slack/
-│   │   ├── router.py            # build_slack_router
+│   │   ├── router.py            # build_slack_router, SlackChat
 │   │   ├── events.py            # POST /events
 │   │   ├── commands.py          # POST /commands
 │   │   └── actions.py           # POST /actions
@@ -293,8 +294,6 @@ packages/chat/src/alpha_chat/
 │   ├── slack_adapter.py         # SlackAdapter
 │   └── telegram_adapter.py      # TelegramAdapter
 └── schemas/
-    ├── slack.py                 # SlackMessageEvent, SlackCommand, SlackAction, ...
-    └── telegram.py              # TelegramUpdate, TelegramMessage, ...
+    ├── slack.py                 # SlackMessageEvent, SlackCommand, SlackAction
+    └── telegram.py              # TelegramUpdate, TelegramMessage
 ```
-
-Last updated: 2026-05-30

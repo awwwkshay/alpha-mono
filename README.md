@@ -28,14 +28,12 @@ Schemas are [Pydantic](https://docs.pydantic.dev/) models — step inputs and ou
 ```text
 alpha-mono/
 ├── packages/
-│   └── core/               # alpha-core — the framework
-│       └── src/alpha_core/
-│           ├── domain/     # AlphaApp, Agent, Workflow, Workspace
-│           ├── schemas/    # Config and context models
-│           ├── contracts/  # FileSystem and Sandbox interfaces
-│           └── types/
+│   ├── core/               # alpha-core — schemas, contracts, interfaces
+│   ├── app/                # alpha-app  — Agent, AlphaApp, Workflow, Workspace, Evals
+│   └── chat/               # alpha-chat — Slack, Telegram, GitHub integrations
 └── apps/
-    └── basic-app/          # Example: multi-agent code reviewer
+    ├── basic-app/          # Example: multi-agent code reviewer
+    └── personal-agent/     # Example: Slack-connected personal assistant
 ```
 
 ---
@@ -45,10 +43,10 @@ alpha-mono/
 Requires Python 3.14+ and [uv](https://docs.astral.sh/uv/).
 
 ```bash
-uv sync
+uv sync --all-packages
 ```
 
-Copy `.env.example` to `.env` and add your API keys (any provider supported by litellm).
+Copy `.env.example` to `.env` in the relevant app directory and add your API keys (any provider supported by litellm).
 
 ---
 
@@ -108,7 +106,7 @@ result = await app.execute_workflow("review", {"language": "Python", "code": "..
 Run it:
 
 ```bash
-uv run --package basic-app python -m basic_app.main
+uv run basic-app
 ```
 
 ---
@@ -147,7 +145,6 @@ agent = Agent(
     workflows={"summarise": summarise},
 )
 
-# The LLM can now call the 'summarise' tool during generation
 result = await agent.generate_async("Summarise this document...", context)
 ```
 
@@ -158,6 +155,22 @@ Multiple workflows and a workspace can be combined — the agent merges all tool
 ## Chat integrations (alpha-chat)
 
 The `alpha-chat` package provides ready-to-use clients and FastAPI endpoints for connecting agents to Slack, Telegram, and GitHub.
+
+Declare chat integrations directly on an `AgentConfig`:
+
+```python
+from alpha_app import AgentConfig, SlackChat
+
+AgentConfig(
+    name="Jarvis",
+    model="gemini/gemini-flash-latest",
+    chat=[SlackChat()],
+)
+```
+
+`AlphaApp` automatically mounts the required endpoints (e.g. `/events`, `/commands`, `/actions` for Slack) when a chat integration is declared.
+
+Or wire it manually:
 
 ```python
 from alpha_chat import SlackClient, SlackAdapter, build_slack_router
@@ -170,15 +183,14 @@ app = FastAPI()
 app.include_router(build_slack_router(adapter), prefix="/slack")
 ```
 
-The Slack router exposes three endpoints — `/slack/events` (Events API + URL verification), `/slack/commands` (slash commands), and `/slack/actions` (interactive components) — each with HMAC signature verification.
+The Slack router exposes `/events` (Events API + URL verification), `/commands` (slash commands), and `/actions` (interactive components), each with HMAC signature verification.
 
 ---
 
 ## Packages
 
-| Package       | Description                                                    |
-| ------------- | -------------------------------------------------------------- |
-| `alpha-core`  | Core framework — agents, workflows, workspace                  |
-| `alpha-chat`  | Chat integrations — Slack, Telegram, GitHub clients + webhooks |
-
-Last updated: 2026-05-30
+| Package       | Description                                                                  |
+| ------------- | ---------------------------------------------------------------------------- |
+| `alpha-core`  | Schemas, contracts, and interfaces — the framework's type layer              |
+| `alpha-app`   | Implementations — `Agent`, `AlphaApp`, `Workflow`, `Workspace`, `Evals`      |
+| `alpha-chat`  | Chat integrations — Slack, Telegram, GitHub clients, adapters, and endpoints |
