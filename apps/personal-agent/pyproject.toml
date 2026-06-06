@@ -4,13 +4,13 @@ build-backend = "hatchling.build"
 
 [project]
 name = "personal-agent"
-version = "0.1.0"
+version = "0.0.1"
 description = "Personal AI assistant connected to Slack"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
-    "alpha-app",
-    "alpha-chat",
+    "alpha-app==0.0.1",
+    "alpha-chat==0.0.1",
     "ddgs>=0.5.0",
     "httpx>=0.27.0",
     "pydantic>=2.13.4",

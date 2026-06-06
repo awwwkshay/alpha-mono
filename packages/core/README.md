@@ -6,7 +6,13 @@ The type layer for the alpha-mono framework. Provides schemas (Pydantic config m
 
 ## Installation
 
-This package is consumed as a workspace dependency. From the repo root:
+Install from PyPI:
+
+```bash
+pip install alpha-core
+```
+
+For local development in this repo:
 
 ```bash
 uv sync --all-packages

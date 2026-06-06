@@ -42,6 +42,29 @@ uv run ty check
 uv run pre-commit run --all-files
 ```
 
+## CI/CD
+
+Pull requests and pushes to `main` run GitHub Actions CI:
+
+```bash
+uv sync --all-packages --frozen
+uv run ruff check .
+uv run ty check
+uv run pytest
+uv build --package alpha-core --out-dir dist
+uv build --package alpha-app --out-dir dist
+uv build --package alpha-chat --out-dir dist
+uvx twine check dist/*
+```
+
+Publishing runs from `.github/workflows/cd.yml` when a GitHub release is
+published. It builds and checks the three package distributions, uploads them as
+a workflow artifact, then publishes to PyPI through Trusted Publishing.
+
+Configure each PyPI project (`alpha-core`, `alpha-app`, and `alpha-chat`) with a
+GitHub Trusted Publisher that points at this repository, workflow
+`.github/workflows/cd.yml`, and environment `pypi`.
+
 ### Add a dependency to a specific package
 
 ```bash

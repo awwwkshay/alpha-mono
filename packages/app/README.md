@@ -4,7 +4,13 @@ Concrete implementations for the alpha-mono framework. Provides `Agent`, `AlphaA
 
 ## Installation
 
-This package is consumed as a workspace dependency. From the repo root:
+Install from PyPI:
+
+```bash
+pip install alpha-app
+```
+
+For local development in this repo:
 
 ```bash
 uv sync --all-packages

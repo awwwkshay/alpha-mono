@@ -86,7 +86,7 @@ wheels = [
 
 [[package]]
 name = "alpha-app"
-version = "0.1.0"
+version = "0.0.1"
 source = { editable = "packages/app" }
 dependencies = [
     { name = "alpha-core" },
@@ -113,7 +113,7 @@ requires-dist = [
 
 [[package]]
 name = "alpha-chat"
-version = "0.1.0"
+version = "0.0.1"
 source = { editable = "packages/chat" }
 dependencies = [
     { name = "alpha-core" },
@@ -140,7 +140,7 @@ requires-dist = [
 
 [[package]]
 name = "alpha-core"
-version = "0.1.0"
+version = "0.0.1"
 source = { editable = "packages/core" }
 dependencies = [
     { name = "litellm" },
@@ -159,7 +159,7 @@ requires-dist = [
 
 [[package]]
 name = "alpha-mono"
-version = "0.1.0"
+version = "0.0.1"
 source = { virtual = "." }
 
 [package.dev-dependencies]
@@ -233,7 +233,7 @@ wheels = [
 
 [[package]]
 name = "basic-app"
-version = "0.1.0"
+version = "0.0.1"
 source = { editable = "apps/basic-app" }
 dependencies = [
     { name = "alpha-app" },
@@ -1176,7 +1176,7 @@ wheels = [
 
 [[package]]
 name = "personal-agent"
-version = "0.1.0"
+version = "0.0.1"
 source = { editable = "apps/personal-agent" }
 dependencies = [
     { name = "alpha-app" },

@@ -4,7 +4,13 @@ Chat platform integrations for alpha-mono. Provides async clients, FastAPI endpo
 
 ## Installation
 
-This package is consumed as a workspace dependency. From the repo root:
+Install from PyPI:
+
+```bash
+pip install alpha-chat
+```
+
+For local development in this repo:
 
 ```bash
 uv sync --all-packages
