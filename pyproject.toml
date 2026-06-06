@@ -1,5 +1,5 @@
 [project]
-name = "alpha-mono"
+name = "clay-mono"
 version = "0.0.1"
 description = "Add your description here"
 readme = "README.md"
@@ -8,9 +8,9 @@ dependencies = []
 
 [dependency-groups]
 dev = [
-    "alpha-core",
-    "alpha-chat",
-    "alpha-app",
+    "clay-core",
+    "clay-chat",
+    "clay-app",
     "basic-app",
     "personal-agent",
     "pre-commit>=4.6.0",
@@ -25,11 +25,11 @@ asyncio_mode = "auto"
 addopts = "--import-mode=importlib"
 
 [tool.uv.sources]
-alpha-core = { workspace = true }
-alpha-chat = { workspace = true }
-alpha-app = { workspace = true }
+clay-core = { workspace = true }
+clay-chat = { workspace = true }
+clay-app = { workspace = true }
 basic-app = { workspace = true }
 personal-agent = { workspace = true }
 
 [tool.uv.workspace]
-members = ["packages/*", "apps/*"]
+members = ["packages/*", "apps/examples/*"]

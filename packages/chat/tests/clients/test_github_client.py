@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-from alpha_chat.clients.github_client import GithubClient
+from clay_chat.clients.github_client import GithubClient
 
 
 async def test_get_repo_calls_github_get_repo():
@@ -10,7 +10,7 @@ async def test_get_repo_calls_github_get_repo():
     mock_gh = MagicMock()
     mock_gh.get_repo.return_value = mock_repo
 
-    with patch("alpha_chat.clients.github_client.Github", return_value=mock_gh):
+    with patch("clay_chat.clients.github_client.Github", return_value=mock_gh):
         client = GithubClient(token="ghp_test")
         result = await client.get_repo("owner", "repo")
 
@@ -25,7 +25,7 @@ async def test_create_issue_calls_repository_create_issue():
     mock_gh = MagicMock()
     mock_gh.get_repo.return_value = mock_repo
 
-    with patch("alpha_chat.clients.github_client.Github", return_value=mock_gh):
+    with patch("clay_chat.clients.github_client.Github", return_value=mock_gh):
         client = GithubClient(token="ghp_test")
         result = await client.create_issue(
             "owner", "repo", "Bug: something broke", "Details here"
@@ -43,7 +43,7 @@ async def test_create_issue_passes_labels():
     mock_gh = MagicMock()
     mock_gh.get_repo.return_value = mock_repo
 
-    with patch("alpha_chat.clients.github_client.Github", return_value=mock_gh):
+    with patch("clay_chat.clients.github_client.Github", return_value=mock_gh):
         client = GithubClient(token="ghp_test")
         await client.create_issue("owner", "repo", "Title", labels=["bug", "urgent"])
 

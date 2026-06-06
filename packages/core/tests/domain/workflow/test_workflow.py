@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 from pydantic import BaseModel, ValidationError
 
-from alpha_app.workflow.workflow import (
+from clay_app.workflow.workflow import (
     ConditionalWorkflowStep,
     ParallelWorkflowStep,
     Workflow,
@@ -12,7 +12,7 @@ from alpha_app.workflow.workflow import (
     WorkflowStepInputError,
     WorkflowStepOutputError,
 )
-from alpha_core import (
+from clay_core import (
     AppConfig,
     AppContext,
     ConditionalWorkflowStepConfig,

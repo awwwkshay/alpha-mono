@@ -3,7 +3,7 @@ from __future__ import annotations
 from unittest.mock import MagicMock, patch
 
 
-from alpha_chat.clients.slack_client import SlackClient
+from clay_chat.clients.slack_client import SlackClient
 
 
 def _make_client() -> SlackClient:

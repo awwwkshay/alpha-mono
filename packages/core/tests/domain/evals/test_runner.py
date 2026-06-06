@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock
 
-from alpha_app.evals.runner import EvalCase, EvalResult, run_evals, run_scorers
-from alpha_core import (
+from clay_app.evals.runner import EvalCase, EvalResult, run_evals, run_scorers
+from clay_core import (
     AppConfig,
     AppContext,
     Scorer,

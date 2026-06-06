@@ -1,15 +1,15 @@
-# alpha-core
+# clay-core
 
-The type layer for the alpha-mono framework. Provides schemas (Pydantic config models), contracts (abstract interfaces for pluggable backends), and shared types used across all packages.
+The type layer for the clay-mono framework. Provides schemas (Pydantic config models), contracts (abstract interfaces for pluggable backends), and shared types used across all packages.
 
-> **Note:** `alpha-core` defines the interfaces. Concrete implementations of `Agent`, `AlphaApp`, `Workflow`, and `Workspace` live in [`alpha-app`](../app/README.md).
+> **Note:** `clay-core` defines the interfaces. Concrete implementations of `Agent`, `ClayApp`, `Workflow`, and `Workspace` live in [`clay-app`](../app/README.md).
 
 ## Installation
 
 Install from PyPI:
 
 ```bash
-pip install alpha-core
+pip install clay-core
 ```
 
 For local development in this repo:
@@ -21,7 +21,7 @@ uv sync --all-packages
 To build a distributable wheel:
 
 ```bash
-uv build --package alpha-core
+uv build --package clay-core
 ```
 
 ## What's in this package
@@ -57,7 +57,7 @@ uv build --package alpha-core
 | Export       | Purpose                                              |
 | ------------ | ---------------------------------------------------- |
 | `AgentTool`  | Wrap a Python function as an LLM-callable tool       |
-| `logger`     | Shared logger (`alpha_core`)                         |
+| `logger`     | Shared logger (`clay_core`)                         |
 
 ## Dependencies
 
@@ -69,6 +69,6 @@ uv build --package alpha-core
 
 ## See also
 
-- [alpha-app](../app/README.md) — concrete implementations built on these interfaces
+- [clay-app](../app/README.md) — concrete implementations built on these interfaces
 - [Architecture](../../docs/architecture.md) — detailed design of all components
 - [Development](../../docs/development.md) — setup and tooling

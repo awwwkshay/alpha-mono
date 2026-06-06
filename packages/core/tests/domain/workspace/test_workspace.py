@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from alpha_app.workspace.workspace import Workspace, _load_skills
-from alpha_core import LocalFilesystemConfig, LocalSandboxConfig, WorkspaceConfig
+from clay_app.workspace.workspace import Workspace, _load_skills
+from clay_core import LocalFilesystemConfig, LocalSandboxConfig, WorkspaceConfig
 
 
 # ---------------------------------------------------------------------------
@@ -155,7 +155,7 @@ def _ws_with_skill(tmp_path: Path) -> Workspace:
     (skill_dir / "skill.md").write_text("instructions")
     (skill_dir / "data.json").write_text('{"x": 1}')
 
-    from alpha_core import SkillsConfig
+    from clay_core import SkillsConfig
 
     cfg = WorkspaceConfig(
         name="test",

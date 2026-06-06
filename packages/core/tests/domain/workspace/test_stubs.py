@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from alpha_app.workspace.file_systems.s3_file_system import S3FileSystem
-from alpha_app.workspace.sandboxes.e2b_sandbox import E2BSandbox
+from clay_app.workspace.file_systems.s3_file_system import S3FileSystem
+from clay_app.workspace.sandboxes.e2b_sandbox import E2BSandbox
 
 
 # ---------------------------------------------------------------------------

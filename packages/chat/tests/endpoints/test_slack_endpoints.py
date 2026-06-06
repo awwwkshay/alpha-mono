@@ -6,8 +6,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from alpha_chat.endpoints.slack.actions import build_actions_router
-from alpha_chat.endpoints.slack.commands import build_commands_router
+from clay_chat.endpoints.slack.actions import build_actions_router
+from clay_chat.endpoints.slack.commands import build_commands_router
 
 
 def _make_adapter() -> MagicMock:
@@ -25,7 +25,7 @@ def test_slack_commands_acknowledge_immediately() -> None:
     client = TestClient(app)
 
     with patch(
-        "alpha_chat.endpoints.slack._utils.SignatureVerifier.is_valid",
+        "clay_chat.endpoints.slack._utils.SignatureVerifier.is_valid",
         return_value=True,
     ):
         response = client.post(
@@ -52,7 +52,7 @@ def test_slack_actions_acknowledge_immediately() -> None:
     client = TestClient(app)
 
     with patch(
-        "alpha_chat.endpoints.slack._utils.SignatureVerifier.is_valid",
+        "clay_chat.endpoints.slack._utils.SignatureVerifier.is_valid",
         return_value=True,
     ):
         response = client.post(

@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from alpha_chat.adapters.slack_adapter import SlackAdapter
-from alpha_core.schemas.app_config import AppConfig
-from alpha_core.schemas.app_context import AppContext
+from clay_chat.adapters.slack_adapter import SlackAdapter
+from clay_core.schemas.app_config import AppConfig
+from clay_core.schemas.app_context import AppContext
 
 
 def _make_adapter() -> SlackAdapter:

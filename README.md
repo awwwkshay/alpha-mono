@@ -1,4 +1,4 @@
-# alpha-mono
+# clay-mono
 
 A Python framework for building and orchestrating AI agent workflows. Define agents, compose them into typed workflows with sequential, parallel, and conditional steps, and give them a sandboxed workspace to read/write files and run commands.
 
@@ -11,7 +11,7 @@ A Python framework for building and orchestrating AI agent workflows. Define age
 
 | Concept                         | What it is                                                    |
 | ------------------------------- | ------------------------------------------------------------- |
-| **`AlphaApp`**                  | Top-level container. Owns agents, workflows, and workspaces.  |
+| **`ClayApp`**                  | Top-level container. Owns agents, workflows, and workspaces.  |
 | **`Agent`**                     | Wraps an LLM via litellm. Supports tool use and streaming.    |
 | **`Workflow`**                  | Typed pipeline — each step's output feeds the next step.      |
 | **`WorkflowStep`**              | Single async step: `(InputModel, AppContext) → OutputModel`.  |
@@ -26,14 +26,15 @@ Schemas are [Pydantic](https://docs.pydantic.dev/) models — step inputs and ou
 ## Repo layout
 
 ```text
-alpha-mono/
+clay-mono/
 ├── packages/
-│   ├── core/               # alpha-core — schemas, contracts, interfaces
-│   ├── app/                # alpha-app  — Agent, AlphaApp, Workflow, Workspace, Evals
-│   └── chat/               # alpha-chat — Slack, Telegram, GitHub integrations
+│   ├── core/               # clay-core — schemas, contracts, interfaces
+│   ├── app/                # clay-app  — Agent, ClayApp, Workflow, Workspace, Evals
+│   └── chat/               # clay-chat — Slack, Telegram, GitHub integrations
 └── apps/
-    ├── basic-app/          # Example: multi-agent code reviewer
-    └── personal-agent/     # Example: Slack-connected personal assistant
+    └── examples/
+        ├── basic-app/      # Example: multi-agent code reviewer
+        └── personal-agent/ # Example: Slack-connected personal assistant
 ```
 
 ---
@@ -76,13 +77,13 @@ CodeSummary
 
 ```python
 # Define configuration, schemas, contracts, and tool abstractions.
-from alpha_core import AgentConfig, AppConfig, AppContext, WorkflowConfig
+from clay_core import AgentConfig, AppConfig, AppContext, WorkflowConfig
 
 # Run agents, apps, workflows, workspaces, and eval implementations.
-from alpha_app import Agent, AlphaApp, Workflow
+from clay_app import Agent, ClayApp, Workflow
 
 # Add optional chat integrations.
-from alpha_chat import SlackChat, SlackClient, build_slack_router
+from clay_chat import SlackChat, SlackClient, build_slack_router
 ```
 
 **Defining a step:**
@@ -97,7 +98,7 @@ async def parse_code(input: CodeReview, context: AppContext) -> CodeSummary:
 **Wiring it up:**
 
 ```python
-app = AlphaApp(config=AppConfig(
+app = ClayApp(config=AppConfig(
     name="code-reviewer",
     agents={"parser": AgentConfig(name="Parser", model="gemini/gemini-2.0-flash", ...)},
     workflows={
@@ -140,7 +141,7 @@ AppConfig(
 The agent gets tools to read/write files, run shell commands, list directories, and more. Use as a context manager to ensure setup/teardown:
 
 ```python
-async with AlphaApp(config=config) as app:
+async with ClayApp(config=config) as app:
     result = await app.agents["coder"].generate_async("Write fib.py and run it.", app.context)
 ```
 
@@ -165,15 +166,15 @@ Multiple workflows and a workspace can be combined — the agent merges all tool
 
 ---
 
-## Chat integrations (alpha-chat)
+## Chat integrations (clay-chat)
 
-The `alpha-chat` package provides ready-to-use clients and FastAPI endpoints for connecting agents to Slack, Telegram, and GitHub.
+The `clay-chat` package provides ready-to-use clients and FastAPI endpoints for connecting agents to Slack, Telegram, and GitHub.
 
 Declare chat integrations directly on an `AgentConfig`:
 
 ```python
-from alpha_core import AgentConfig
-from alpha_chat import SlackChat
+from clay_core import AgentConfig
+from clay_chat import SlackChat
 
 AgentConfig(
     name="Jarvis",
@@ -182,12 +183,12 @@ AgentConfig(
 )
 ```
 
-`AlphaApp` automatically mounts the required endpoints (e.g. `/events`, `/commands`, `/actions` for Slack) when a chat integration is declared.
+`ClayApp` automatically mounts the required endpoints (e.g. `/events`, `/commands`, `/actions` for Slack) when a chat integration is declared.
 
 Or wire it manually:
 
 ```python
-from alpha_chat import SlackClient, SlackAdapter, build_slack_router
+from clay_chat import SlackClient, SlackAdapter, build_slack_router
 from fastapi import FastAPI
 
 slack_client = SlackClient(token=os.environ["SLACK_BOT_TOKEN"], signing_secret=os.environ["SLACK_SIGNING_SECRET"])
@@ -205,6 +206,6 @@ The Slack router exposes `/events` (Events API + URL verification), `/commands` 
 
 | Package       | Description                                                                  |
 | ------------- | ---------------------------------------------------------------------------- |
-| `alpha-core`  | Schemas, contracts, and interfaces — the framework's type layer              |
-| `alpha-app`   | Runtime implementations — `Agent`, `AlphaApp`, `Workflow`, `Workspace`, `Evals` |
-| `alpha-chat`  | Chat integrations — Slack, Telegram, GitHub clients, adapters, and endpoints |
+| `clay-core`  | Schemas, contracts, and interfaces — the framework's type layer              |
+| `clay-app`   | Runtime implementations — `Agent`, `ClayApp`, `Workflow`, `Workspace`, `Evals` |
+| `clay-chat`  | Chat integrations — Slack, Telegram, GitHub clients, adapters, and endpoints |

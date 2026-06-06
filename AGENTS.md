@@ -1,4 +1,4 @@
-# alpha-mono — Codex instructions
+# clay-mono — Codex instructions
 
 ## Skill usage
 
@@ -8,8 +8,8 @@ The skill defines the full development process: analyse → explore → clarify 
 
 ## Project layout
 
-- `packages/core/` — `alpha_core` library (agents, workflows, workspace, evals)
-- `apps/basic-app/` — example application built on `alpha_core`
+- `packages/core/` — `clay_core` library (agents, workflows, workspace, evals)
+- `apps/examples/basic-app/` — example application built on `clay_core`
 - `docs/` — architecture and development docs
 
 ## Running checks

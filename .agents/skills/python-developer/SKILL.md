@@ -1,11 +1,11 @@
 ---
 name: python-developer
-description: Use for any Python code or behavior change in alpha-mono, including building, implementing, adding, refactoring, fixing, moving packages, changing workspace configuration, or updating tests/docs tied to code behavior.
+description: Use for any Python code or behavior change in clay-mono, including building, implementing, adding, refactoring, fixing, moving packages, changing workspace configuration, or updating tests/docs tied to code behavior.
 ---
 
 # Python Developer
 
-Use this skill before any code or behavior change in `alpha-mono`.
+Use this skill before any code or behavior change in `clay-mono`.
 
 If the user request is docs-only or does not change code behavior, use the same workflow only to the extent needed for the affected files; do not run code verification unless the change affects executable behavior.
 

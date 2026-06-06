@@ -1,5 +1,12 @@
 line-length = 88
 target-version = "py314"
+src = [
+    "packages/core/src",
+    "packages/app/src",
+    "packages/chat/src",
+    "apps/examples/basic-app/src",
+    "apps/examples/personal-agent/src",
+]
 
 [lint]
 select = ["E", "F", "W", "C90"]

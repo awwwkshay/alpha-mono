@@ -1,13 +1,13 @@
-# alpha-chat
+# clay-chat
 
-Chat platform integrations for alpha-mono. Provides async clients, FastAPI endpoint builders, and adapter layers for connecting agents to Slack, Telegram, and GitHub.
+Chat platform integrations for clay-mono. Provides async clients, FastAPI endpoint builders, and adapter layers for connecting agents to Slack, Telegram, and GitHub.
 
 ## Installation
 
 Install from PyPI:
 
 ```bash
-pip install alpha-chat
+pip install clay-chat
 ```
 
 For local development in this repo:
@@ -19,7 +19,7 @@ uv sync --all-packages
 To build a distributable wheel:
 
 ```bash
-uv build --package alpha-chat
+uv build --package clay-chat
 ```
 
 ## What's in this package
@@ -56,11 +56,11 @@ FastAPI `APIRouter` factories. All Slack endpoints verify the `X-Slack-Signature
 
 ### `SlackChat` (declarative integration)
 
-`SlackChat` is a `ChatContract` that lets you declare a Slack integration directly on an `AgentConfig`. `AlphaApp` reads the `chat` list and mounts the correct router automatically — no manual wiring needed.
+`SlackChat` is a `ChatContract` that lets you declare a Slack integration directly on an `AgentConfig`. `ClayApp` reads the `chat` list and mounts the correct router automatically — no manual wiring needed.
 
 ```python
-from alpha_core import AgentConfig
-from alpha_chat import SlackChat
+from clay_core import AgentConfig
+from clay_chat import SlackChat
 
 AgentConfig(
     name="Jarvis",
@@ -76,7 +76,7 @@ Required env vars: `SLACK_BOT_TOKEN`, `SLACK_SIGNING_SECRET`.
 For full control, wire the pieces together yourself:
 
 ```python
-from alpha_chat import SlackClient, SlackAdapter, build_slack_router
+from clay_chat import SlackClient, SlackAdapter, build_slack_router
 from fastapi import FastAPI
 import os
 
@@ -103,6 +103,6 @@ app.include_router(build_slack_router(adapter), prefix="/slack")
 
 ## See also
 
-- [alpha-app](../app/README.md) — runtime framework that can host chat integrations
-- [personal-agent](../../apps/personal-agent/README.md) — example app using Slack integration
+- [clay-app](../app/README.md) — runtime framework that can host chat integrations
+- [personal-agent](../../apps/examples/personal-agent/README.md) — example app using Slack integration
 - [Architecture](../../docs/architecture.md) — chat integration design details

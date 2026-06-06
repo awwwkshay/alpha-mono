@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from alpha_app import Agent, AlphaApp, Workflow, Workspace
-from alpha_chat import SlackChat, SlackClient, build_slack_router
-from alpha_core import AgentConfig, AgentTool, AppConfig, AppContext, WorkflowConfig
+from clay_app import Agent, ClayApp, Workflow, Workspace
+from clay_chat import SlackChat, SlackClient, build_slack_router
+from clay_core import AgentConfig, AgentTool, AppConfig, AppContext, WorkflowConfig
 
 
 def test_package_native_public_imports() -> None:
     assert Agent is not None
-    assert AlphaApp is not None
+    assert ClayApp is not None
     assert Workflow is not None
     assert Workspace is not None
     assert SlackChat is not None

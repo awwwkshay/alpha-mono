@@ -5,10 +5,12 @@ from unittest.mock import AsyncMock, MagicMock
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from alpha_chat.endpoints.telegram.webhook import build_telegram_router
+from clay_chat.endpoints.telegram.webhook import build_telegram_router
 
 
-def _make_app(secret_token: str | None = "secret-token") -> tuple[TestClient, MagicMock]:
+def _make_app(
+    secret_token: str | None = "secret-token",
+) -> tuple[TestClient, MagicMock]:
     adapter = MagicMock()
     adapter.handle_update = AsyncMock()
     app = FastAPI()

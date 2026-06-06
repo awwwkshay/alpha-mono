@@ -6,12 +6,12 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from pydantic import BaseModel
 
-from alpha_app.agent.agent import (
+from clay_app.agent.agent import (
     Agent,
     _accumulate_tool_call_delta,
     _workflow_to_tool,
 )
-from alpha_core import (
+from clay_core import (
     AgentConfig,
     AppConfig,
     AppContext,
@@ -408,9 +408,7 @@ async def test_stream_async_yields_content_before_and_after_tool_calls():
     )
     second_turn = _AsyncChunks([_make_stream_chunk("final after tool")])
 
-    with patch(
-        "litellm.acompletion", AsyncMock(side_effect=[first_turn, second_turn])
-    ):
+    with patch("litellm.acompletion", AsyncMock(side_effect=[first_turn, second_turn])):
         parts = [chunk async for chunk in agent.stream_async("Hi", _make_context())]
 
     assert parts == ["draft before tool", "final after tool"]

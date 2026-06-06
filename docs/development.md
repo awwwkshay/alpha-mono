@@ -51,9 +51,9 @@ uv sync --all-packages --frozen
 uv run ruff check .
 uv run ty check
 uv run pytest
-uv build --package alpha-core --out-dir dist
-uv build --package alpha-app --out-dir dist
-uv build --package alpha-chat --out-dir dist
+uv build --package clay-core --out-dir dist
+uv build --package clay-app --out-dir dist
+uv build --package clay-chat --out-dir dist
 uvx twine check dist/*
 ```
 
@@ -61,14 +61,14 @@ Publishing runs from `.github/workflows/cd.yml` when a GitHub release is
 published. It builds and checks the three package distributions, uploads them as
 a workflow artifact, then publishes to PyPI through Trusted Publishing.
 
-Configure each PyPI project (`alpha-core`, `alpha-app`, and `alpha-chat`) with a
+Configure each PyPI project (`clay-core`, `clay-app`, and `clay-chat`) with a
 GitHub Trusted Publisher that points at this repository, workflow
 `.github/workflows/cd.yml`, and environment `pypi`.
 
 ### Add a dependency to a specific package
 
 ```bash
-uv add --package alpha-app <package>
+uv add --package clay-app <package>
 ```
 
 ### Add a dev dependency (root workspace)

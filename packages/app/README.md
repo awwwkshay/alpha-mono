@@ -1,13 +1,13 @@
-# alpha-app
+# clay-app
 
-Concrete implementations for the alpha-mono framework. Provides `Agent`, `AlphaApp`, `Workflow`, `Workspace`, and a suite of LLM-based eval scorers, all built on the schemas and contracts defined in `alpha-core`.
+Concrete implementations for the clay-mono framework. Provides `Agent`, `ClayApp`, `Workflow`, `Workspace`, and a suite of LLM-based eval scorers, all built on the schemas and contracts defined in `clay-core`.
 
 ## Installation
 
 Install from PyPI:
 
 ```bash
-pip install alpha-app
+pip install clay-app
 ```
 
 For local development in this repo:
@@ -19,7 +19,7 @@ uv sync --all-packages
 To build a distributable wheel:
 
 ```bash
-uv build --package alpha-app
+uv build --package clay-app
 ```
 
 ## What's in this package
@@ -28,7 +28,7 @@ uv build --package alpha-app
 
 | Class       | Purpose                                                                 |
 | ----------- | ----------------------------------------------------------------------- |
-| `AlphaApp`  | Top-level container — owns agents, workflows, workspaces, and server    |
+| `ClayApp`  | Top-level container — owns agents, workflows, workspaces, and server    |
 | `Agent`     | LLM wrapper with tool-use loop, structured output, and streaming        |
 | `Workflow`  | Typed step pipeline executor                                            |
 | `Workspace` | Composes filesystem, sandbox, and skills; exposes tools to the LLM     |
@@ -57,7 +57,7 @@ Run LLM-graded evaluations on agent outputs:
 | `ToxicityScorer`          | Harmful or toxic content                            |
 
 ```python
-from alpha_app import run_evals, EvalCase, AnswerRelevancyScorer
+from clay_app import run_evals, EvalCase, AnswerRelevancyScorer
 
 results = await run_evals(
     agent=agent,
@@ -69,24 +69,24 @@ results = await run_evals(
 
 ### Chat integrations
 
-Chat integrations live in `alpha-chat`. Import them from there so package ownership stays clear:
+Chat integrations live in `clay-chat`. Import them from there so package ownership stays clear:
 
 ```python
-from alpha_chat import SlackChat, SlackClient, SlackAdapter, build_slack_router
+from clay_chat import SlackChat, SlackClient, SlackAdapter, build_slack_router
 ```
 
 ## Quick start
 
 ```python
-from alpha_app import AlphaApp
-from alpha_core import AgentConfig, AppConfig, WorkflowConfig, WorkflowStepConfig
+from clay_app import ClayApp
+from clay_core import AgentConfig, AppConfig, WorkflowConfig, WorkflowStepConfig
 
 async def my_step(input: MyInput, context: AppContext) -> MyOutput:
     agent = context.agents["my_agent"]
     result = await agent.generate_async("Do something with this...", context)
     return MyOutput(...)
 
-app = AlphaApp(config=AppConfig(
+app = ClayApp(config=AppConfig(
     name="my-app",
     agents={"my_agent": AgentConfig(name="MyAgent", model="gemini/gemini-2.0-flash")},
     workflows={
@@ -103,6 +103,6 @@ result = await app.execute_workflow("my_workflow", {"field": "value"})
 
 ## See also
 
-- [alpha-core](../core/README.md) — schemas and contracts this package implements
-- [alpha-chat](../chat/README.md) — chat integration details
+- [clay-core](../core/README.md) — schemas and contracts this package implements
+- [clay-chat](../chat/README.md) — chat integration details
 - [Architecture](../../docs/architecture.md) — detailed design of all components

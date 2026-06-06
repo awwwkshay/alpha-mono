@@ -4,10 +4,10 @@ requires-python = ">=3.14"
 
 [manifest]
 members = [
-    "alpha-app",
-    "alpha-chat",
-    "alpha-core",
-    "alpha-mono",
+    "clay-app",
+    "clay-chat",
+    "clay-core",
+    "clay-mono",
     "basic-app",
     "personal-agent",
 ]
@@ -85,11 +85,11 @@ wheels = [
 ]
 
 [[package]]
-name = "alpha-app"
+name = "clay-app"
 version = "0.0.1"
 source = { editable = "packages/app" }
 dependencies = [
-    { name = "alpha-core" },
+    { name = "clay-core" },
     { name = "httpx" },
     { name = "litellm" },
     { name = "opentelemetry-api" },
@@ -101,7 +101,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "alpha-core", editable = "packages/core" },
+    { name = "clay-core", editable = "packages/core" },
     { name = "httpx", specifier = ">=0.27.0" },
     { name = "litellm", specifier = ">=1.86.0" },
     { name = "opentelemetry-api", specifier = ">=1.24.0" },
@@ -112,11 +112,11 @@ requires-dist = [
 ]
 
 [[package]]
-name = "alpha-chat"
+name = "clay-chat"
 version = "0.0.1"
 source = { editable = "packages/chat" }
 dependencies = [
-    { name = "alpha-core" },
+    { name = "clay-core" },
     { name = "fastapi" },
     { name = "opentelemetry-api" },
     { name = "pydantic" },
@@ -128,7 +128,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "alpha-core", editable = "packages/core" },
+    { name = "clay-core", editable = "packages/core" },
     { name = "fastapi", specifier = ">=0.115.0" },
     { name = "opentelemetry-api", specifier = ">=1.24.0" },
     { name = "pydantic", specifier = ">=2.13.4" },
@@ -139,7 +139,7 @@ requires-dist = [
 ]
 
 [[package]]
-name = "alpha-core"
+name = "clay-core"
 version = "0.0.1"
 source = { editable = "packages/core" }
 dependencies = [
@@ -158,15 +158,15 @@ requires-dist = [
 ]
 
 [[package]]
-name = "alpha-mono"
+name = "clay-mono"
 version = "0.0.1"
 source = { virtual = "." }
 
 [package.dev-dependencies]
 dev = [
-    { name = "alpha-app" },
-    { name = "alpha-chat" },
-    { name = "alpha-core" },
+    { name = "clay-app" },
+    { name = "clay-chat" },
+    { name = "clay-core" },
     { name = "basic-app" },
     { name = "personal-agent" },
     { name = "pre-commit" },
@@ -180,11 +180,11 @@ dev = [
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "alpha-app", editable = "packages/app" },
-    { name = "alpha-chat", editable = "packages/chat" },
-    { name = "alpha-core", editable = "packages/core" },
-    { name = "basic-app", editable = "apps/basic-app" },
-    { name = "personal-agent", editable = "apps/personal-agent" },
+    { name = "clay-app", editable = "packages/app" },
+    { name = "clay-chat", editable = "packages/chat" },
+    { name = "clay-core", editable = "packages/core" },
+    { name = "basic-app", editable = "apps/examples/basic-app" },
+    { name = "personal-agent", editable = "apps/examples/personal-agent" },
     { name = "pre-commit", specifier = ">=4.6.0" },
     { name = "pytest", specifier = ">=9.0.3" },
     { name = "pytest-asyncio", specifier = ">=1.4.0" },
@@ -234,9 +234,9 @@ wheels = [
 [[package]]
 name = "basic-app"
 version = "0.0.1"
-source = { editable = "apps/basic-app" }
+source = { editable = "apps/examples/basic-app" }
 dependencies = [
-    { name = "alpha-app" },
+    { name = "clay-app" },
     { name = "opentelemetry-exporter-otlp" },
     { name = "opentelemetry-sdk" },
     { name = "pydantic" },
@@ -244,7 +244,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "alpha-app", editable = "packages/app" },
+    { name = "clay-app", editable = "packages/app" },
     { name = "opentelemetry-exporter-otlp", specifier = ">=1.42.1" },
     { name = "opentelemetry-sdk", specifier = ">=1.42.1" },
     { name = "pydantic", specifier = ">=2.13.4" },
@@ -1177,10 +1177,10 @@ wheels = [
 [[package]]
 name = "personal-agent"
 version = "0.0.1"
-source = { editable = "apps/personal-agent" }
+source = { editable = "apps/examples/personal-agent" }
 dependencies = [
-    { name = "alpha-app" },
-    { name = "alpha-chat" },
+    { name = "clay-app" },
+    { name = "clay-chat" },
     { name = "ddgs" },
     { name = "httpx" },
     { name = "pydantic" },
@@ -1188,8 +1188,8 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "alpha-app", editable = "packages/app" },
-    { name = "alpha-chat", editable = "packages/chat" },
+    { name = "clay-app", editable = "packages/app" },
+    { name = "clay-chat", editable = "packages/chat" },
     { name = "ddgs", specifier = ">=0.5.0" },
     { name = "httpx", specifier = ">=0.27.0" },
     { name = "pydantic", specifier = ">=2.13.4" },

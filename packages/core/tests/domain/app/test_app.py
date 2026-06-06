@@ -4,8 +4,8 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from alpha_app.app.app import AlphaApp
-from alpha_core import AgentConfig, AppConfig, LocalFilesystemConfig, WorkspaceConfig
+from clay_app.app.app import ClayApp
+from clay_core import AgentConfig, AppConfig, LocalFilesystemConfig, WorkspaceConfig
 
 
 # ---------------------------------------------------------------------------
@@ -34,14 +34,14 @@ def _agent_cfg(
 
 def test_init_creates_agents():
     config = _simple_config(agents={"a": _agent_cfg("A"), "b": _agent_cfg("B")})
-    with patch("alpha_app.app.app.load_dotenv"):
-        app = AlphaApp(config=config)
+    with patch("clay_app.app.app.load_dotenv"):
+        app = ClayApp(config=config)
     assert set(app.agents.keys()) == {"a", "b"}
 
 
 def test_init_creates_workflows(tmp_path):
     from pydantic import BaseModel
-    from alpha_core import WorkflowConfig, WorkflowStepConfig
+    from clay_core import WorkflowConfig, WorkflowStepConfig
 
     class In(BaseModel):
         x: str
@@ -60,15 +60,15 @@ def test_init_creates_workflows(tmp_path):
     )
 
     config = _simple_config(workflows={"wf": wf})
-    with patch("alpha_app.app.app.load_dotenv"):
-        app = AlphaApp(config=config)
+    with patch("clay_app.app.app.load_dotenv"):
+        app = ClayApp(config=config)
     assert "wf" in app.workflows
 
 
 def test_init_builds_context():
     config = _simple_config(agents={"a": _agent_cfg("A")})
-    with patch("alpha_app.app.app.load_dotenv"):
-        app = AlphaApp(config=config)
+    with patch("clay_app.app.app.load_dotenv"):
+        app = ClayApp(config=config)
     assert "a" in app.context.agents
     assert app.context.config is config
 
@@ -88,8 +88,8 @@ def test_global_workspace_shared_across_agents(tmp_path):
         agents={"a": _agent_cfg("A"), "b": _agent_cfg("B")},
         workspace=ws_cfg,
     )
-    with patch("alpha_app.app.app.load_dotenv"):
-        app = AlphaApp(config=config)
+    with patch("clay_app.app.app.load_dotenv"):
+        app = ClayApp(config=config)
     # Only one unique workspace instance despite two agents
     assert len(app._workspaces) == 1
 
@@ -107,8 +107,8 @@ def test_per_agent_workspace_overrides_global(tmp_path):
         agents={"a": _agent_cfg("A", workspace=agent_ws), "b": _agent_cfg("B")},
         workspace=global_ws,
     )
-    with patch("alpha_app.app.app.load_dotenv"):
-        app = AlphaApp(config=config)
+    with patch("clay_app.app.app.load_dotenv"):
+        app = ClayApp(config=config)
     # Two distinct workspace instances
     assert len(app._workspaces) == 2
 
@@ -126,8 +126,8 @@ def test_agent_context_uses_assigned_workspace(tmp_path):
         agents={"a": _agent_cfg("A", workspace=agent_ws), "b": _agent_cfg("B")},
         workspace=global_ws,
     )
-    with patch("alpha_app.app.app.load_dotenv"):
-        app = AlphaApp(config=config)
+    with patch("clay_app.app.app.load_dotenv"):
+        app = ClayApp(config=config)
 
     agent_context = app.get_agent_context("a")
     fallback_context = app.get_agent_context("b")
@@ -157,8 +157,8 @@ async def test_setup_calls_workspace_setup(tmp_path):
         agents={"a": _agent_cfg("A")},
         workspace=ws_cfg,
     )
-    with patch("alpha_app.app.app.load_dotenv"):
-        app = AlphaApp(config=config)
+    with patch("clay_app.app.app.load_dotenv"):
+        app = ClayApp(config=config)
 
     with patch.object(list(app._workspaces)[0], "setup", AsyncMock()) as mock_setup:
         await app.setup()
@@ -174,8 +174,8 @@ async def test_teardown_calls_workspace_teardown(tmp_path):
         agents={"a": _agent_cfg("A")},
         workspace=ws_cfg,
     )
-    with patch("alpha_app.app.app.load_dotenv"):
-        app = AlphaApp(config=config)
+    with patch("clay_app.app.app.load_dotenv"):
+        app = ClayApp(config=config)
 
     with patch.object(list(app._workspaces)[0], "teardown", AsyncMock()) as mock_td:
         await app.teardown()
@@ -191,8 +191,8 @@ async def test_context_manager_calls_setup_and_teardown(tmp_path):
         agents={"a": _agent_cfg("A")},
         workspace=ws_cfg,
     )
-    with patch("alpha_app.app.app.load_dotenv"):
-        app = AlphaApp(config=config)
+    with patch("clay_app.app.app.load_dotenv"):
+        app = ClayApp(config=config)
 
     ws = list(app._workspaces)[0]
     with (
@@ -211,7 +211,7 @@ async def test_context_manager_calls_setup_and_teardown(tmp_path):
 
 async def test_execute_workflow_delegates_to_workflow():
     from pydantic import BaseModel
-    from alpha_core import WorkflowConfig, WorkflowStepConfig
+    from clay_core import WorkflowConfig, WorkflowStepConfig
 
     class In(BaseModel):
         v: int
@@ -230,8 +230,8 @@ async def test_execute_workflow_delegates_to_workflow():
     )
 
     config = _simple_config(workflows={"wf": wf})
-    with patch("alpha_app.app.app.load_dotenv"):
-        app = AlphaApp(config=config)
+    with patch("clay_app.app.app.load_dotenv"):
+        app = ClayApp(config=config)
 
     result = await app.execute_workflow("wf", {"v": 3})
     assert result.model_dump() == {"v": 6}
@@ -239,7 +239,7 @@ async def test_execute_workflow_delegates_to_workflow():
 
 async def test_execute_workflow_unknown_id_raises():
     config = _simple_config()
-    with patch("alpha_app.app.app.load_dotenv"):
-        app = AlphaApp(config=config)
+    with patch("clay_app.app.app.load_dotenv"):
+        app = ClayApp(config=config)
     with pytest.raises(KeyError):
         await app.execute_workflow("no_such_workflow", {})

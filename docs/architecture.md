@@ -2,11 +2,11 @@
 
 ## Overview
 
-alpha-mono is structured around three layers:
+clay-mono is structured around three layers:
 
 ```text
 ┌─────────────────────────────────────────────┐
-│                   AlphaApp                  │  entry point, lifecycle
+│                   ClayApp                  │  entry point, lifecycle
 ├──────────────┬──────────────────────────────┤
 │   Workflows  │         Agents               │  orchestration & LLM calls
 ├──────────────┴──────────────────────────────┤
@@ -20,23 +20,23 @@ Everything is configured via Pydantic models (`AppConfig`, `WorkflowConfig`, `Ag
 
 The codebase is split across three packages:
 
-- **`alpha-core`** — schemas, contracts, and shared types (the interface layer)
-- **`alpha-app`** — concrete implementations: `AlphaApp`, `Agent`, `Workflow`, `Workspace`, `Evals`
-- **`alpha-chat`** — optional chat integrations: Slack, Telegram, GitHub clients, adapters, and routers
+- **`clay-core`** — schemas, contracts, and shared types (the interface layer)
+- **`clay-app`** — concrete implementations: `ClayApp`, `Agent`, `Workflow`, `Workspace`, `Evals`
+- **`clay-chat`** — optional chat integrations: Slack, Telegram, GitHub clients, adapters, and routers
 
 Use package-native imports at application boundaries:
 
 ```python
-from alpha_core import AgentConfig, AppConfig, WorkflowConfig
-from alpha_app import AlphaApp, Agent, Workflow
-from alpha_chat import SlackChat, build_slack_router
+from clay_core import AgentConfig, AppConfig, WorkflowConfig
+from clay_app import ClayApp, Agent, Workflow
+from clay_chat import SlackChat, build_slack_router
 ```
 
 ---
 
-## AlphaApp
+## ClayApp
 
-`AlphaApp` is the top-level container. It owns and manages the lifecycle of agents, workflows, and workspaces.
+`ClayApp` is the top-level container. It owns and manages the lifecycle of agents, workflows, and workspaces.
 
 **Construction (`__init__`)**
 
@@ -50,10 +50,10 @@ from alpha_chat import SlackChat, build_slack_router
 
 ### Lifecycle
 
-`AlphaApp` implements the async context manager protocol. `setup()` initialises each workspace (creates directories, opens connections). `teardown()` kills any running sandbox processes.
+`ClayApp` implements the async context manager protocol. `setup()` initialises each workspace (creates directories, opens connections). `teardown()` kills any running sandbox processes.
 
 ```python
-async with AlphaApp(config=config) as app:
+async with ClayApp(config=config) as app:
     ...  # workspaces ready here
 # workspaces torn down on exit
 ```
@@ -210,9 +210,9 @@ Subclass `SandboxContract` and implement `setup`, `teardown`, `execute_command`,
 
 ---
 
-## Chat integrations (alpha-chat)
+## Chat integrations (clay-chat)
 
-The `packages/chat` package (`alpha_chat`) provides:
+The `packages/chat` package (`clay_chat`) provides:
 
 - **Clients** — thin async wrappers over official SDKs:
   - `SlackClient` — `send_message`, `set_status`, `react`, `open_modal`, `ack_slash_command`
@@ -227,7 +227,7 @@ The `packages/chat` package (`alpha_chat`) provides:
   - `SlackAdapter(agent, context, slack_client)` — `handle_event`, `handle_command`, `handle_action`; maintains per-conversation history; shows typing status
   - `TelegramAdapter(agent, context, telegram_client)` — `handle_update`
 
-- **`SlackChat`** — declarative integration. Add to `AgentConfig.chat` and `AlphaApp` mounts the router automatically.
+- **`SlackChat`** — declarative integration. Add to `AgentConfig.chat` and `ClayApp` mounts the router automatically.
 
 **Wiring pattern (manual):**
 
@@ -244,7 +244,7 @@ app.include_router(build_slack_router(adapter), prefix="/slack")
 ## Package structure
 
 ```text
-packages/core/src/alpha_core/
+packages/core/src/clay_core/
 ├── schemas/
 │   ├── app_config.py
 │   ├── agent_config.py
@@ -260,9 +260,9 @@ packages/core/src/alpha_core/
 └── types/
     └── app_id.py
 
-packages/app/src/alpha_app/
+packages/app/src/clay_app/
 ├── app/
-│   └── app.py                   # AlphaApp
+│   └── app.py                   # ClayApp
 ├── agent/
 │   └── agent.py                 # Agent, tool-use loop, structured output
 ├── workflow/
@@ -286,7 +286,7 @@ packages/app/src/alpha_app/
         ├── keyword_coverage.py
         └── toxicity.py
 
-packages/chat/src/alpha_chat/
+packages/chat/src/clay_chat/
 ├── clients/
 │   ├── slack_client.py          # SlackClient
 │   ├── telegram_client.py       # TelegramClient

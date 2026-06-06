@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from alpha_core import (
+from clay_core import (
     Scorer,
     SamplingConfig,
     ScorerConfig,
