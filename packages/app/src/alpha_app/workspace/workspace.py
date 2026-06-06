@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -382,6 +383,7 @@ class Workspace:
         self._fs: FileSystemContract | None = None
         self._sandbox: SandboxContract | None = None
         self._skills: list[Skill] = []
+        self._fs_lock = asyncio.Lock()
 
     async def setup(self) -> None:
         if self.config.filesystem is not None:
@@ -423,6 +425,8 @@ class Workspace:
                 if isinstance(result, BaseModel):
                     result = result.model_dump()
                 span.set_attribute(WORKSPACE_TOOL_SUCCESS, True)
+            except PermissionError:
+                raise
             except Exception as exc:
                 span.record_exception(exc)
                 span.set_status(Status(StatusCode.ERROR, str(exc)))
@@ -435,7 +439,8 @@ class Workspace:
 
     async def _dispatch(self, name: str, args: dict) -> object:
         if self._fs is not None:
-            result = _dispatch_fs_tool(name, args, self._fs)
+            async with self._fs_lock:
+                result = await asyncio.to_thread(_dispatch_fs_tool, name, args, self._fs)
             if result is not _UNHANDLED:
                 return result
         if self._sandbox is not None:

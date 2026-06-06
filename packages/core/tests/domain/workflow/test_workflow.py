@@ -287,6 +287,16 @@ async def test_workflow_single_step():
     assert result.model_dump() == {"result": "3"}
 
 
+async def test_empty_workflow_validates_output_schema():
+    wf = WorkflowConfig.create(
+        name="empty", input_schema=Inp, output_schema=Out, steps={}
+    )
+    workflow = Workflow(config=wf)
+
+    with pytest.raises(WorkflowStepOutputError, match="empty"):
+        await workflow.execute({"value": 3}, _ctx())
+
+
 # ---------------------------------------------------------------------------
 # Error class messages
 # ---------------------------------------------------------------------------

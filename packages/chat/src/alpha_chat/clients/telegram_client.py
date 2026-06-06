@@ -16,9 +16,9 @@ class TelegramClient:
         async with self._bot:
             await self._bot.send_message(chat_id=chat_id, text=text)
 
-    async def set_webhook(self, url: str) -> None:
+    async def set_webhook(self, url: str, secret_token: str | None = None) -> None:
         async with self._bot:
-            await self._bot.set_webhook(url=url)
+            await self._bot.set_webhook(url=url, secret_token=secret_token)
 
     async def delete_webhook(self) -> None:
         logger.info("Deleting Telegram webhook")

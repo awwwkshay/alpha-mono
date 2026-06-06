@@ -89,7 +89,6 @@ name = "alpha-app"
 version = "0.1.0"
 source = { editable = "packages/app" }
 dependencies = [
-    { name = "alpha-chat" },
     { name = "alpha-core" },
     { name = "httpx" },
     { name = "litellm" },
@@ -102,7 +101,6 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "alpha-chat", editable = "packages/chat" },
     { name = "alpha-core", editable = "packages/core" },
     { name = "httpx", specifier = ">=0.27.0" },
     { name = "litellm", specifier = ">=1.86.0" },
@@ -1182,6 +1180,7 @@ version = "0.1.0"
 source = { editable = "apps/personal-agent" }
 dependencies = [
     { name = "alpha-app" },
+    { name = "alpha-chat" },
     { name = "ddgs" },
     { name = "httpx" },
     { name = "pydantic" },
@@ -1190,6 +1189,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "alpha-app", editable = "packages/app" },
+    { name = "alpha-chat", editable = "packages/chat" },
     { name = "ddgs", specifier = ">=0.5.0" },
     { name = "httpx", specifier = ">=0.27.0" },
     { name = "pydantic", specifier = ">=2.13.4" },

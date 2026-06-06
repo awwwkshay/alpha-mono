@@ -115,6 +115,11 @@ def _agent_tool_to_tool(name: str, tool: AgentTool) -> ChatCompletionToolParam:
     )
 
 
+def _tool_name(tool: ChatCompletionToolParam) -> str:
+    function = tool["function"]
+    return str(function["name"])
+
+
 def _accumulate_tool_call_delta(
     tc_delta: Any, collected: dict[int, ChatCompletionAssistantToolCall]
 ) -> None:
@@ -182,11 +187,39 @@ class Agent:
         }
         self._tools: dict[str, AgentTool[Any, Any]] = dict(config.tools)
 
-    def _get_tools(self) -> list[ChatCompletionToolParam] | None:
+    def _build_system_prompt(self, context: AppContext | None = None) -> str:
+        prompt = self.config.system_prompt
+        workspace = getattr(context, "workspace", None)
+        if workspace is None:
+            return prompt
+
+        additions = workspace.get_system_prompt_additions()
+        if not additions:
+            return prompt
+        return f"{prompt}\n\n{additions}"
+
+    def _get_tools(
+        self, context: AppContext | None = None
+    ) -> list[ChatCompletionToolParam] | None:
         params = [
             *(_workflow_to_tool(n, w) for n, w in self._workflows.items()),
             *(_agent_tool_to_tool(n, t) for n, t in self._tools.items()),
         ]
+        workspace = getattr(context, "workspace", None)
+        if workspace is not None:
+            params.extend(workspace.get_tools())
+        seen: set[str] = set()
+        duplicates: set[str] = set()
+        for tool in params:
+            name = _tool_name(tool)
+            if name in seen:
+                duplicates.add(name)
+            seen.add(name)
+        if duplicates:
+            names = ", ".join(sorted(duplicates))
+            raise ValueError(
+                f"Agent '{self.config.name}' has duplicate tool name(s): {names}"
+            )
         return params if params else None
 
     async def _dispatch_tool(
@@ -195,7 +228,16 @@ class Agent:
         if context is None:
             raise RuntimeError(f"Cannot execute tool '{name}': no AppContext available")
 
-        tool_type = "workflow" if name in self._workflows else "function"
+        workspace = getattr(context, "workspace", None)
+        tool_type = (
+            "workflow"
+            if name in self._workflows
+            else "function"
+            if name in self._tools
+            else "workspace"
+            if workspace is not None
+            else "unknown"
+        )
         with _tracer.start_as_current_span(
             f"{SPAN_AGENT_TOOL_CALL}/{name}",
             attributes={
@@ -225,6 +267,8 @@ class Agent:
                         if hasattr(output, "model_dump_json")
                         else json.dumps(output)
                     )
+                elif workspace is not None:
+                    result = await workspace.execute_tool(name, arguments)
                 else:
                     raise RuntimeError(f"Tool '{name}' not found")
 
@@ -251,12 +295,12 @@ class Agent:
 
         messages: list[AllMessageValues] = [
             ChatCompletionSystemMessage(
-                role="system", content=self.config.system_prompt
+                role="system", content=self._build_system_prompt(context)
             ),
             *(history or []),
             ChatCompletionUserMessage(role="user", content=user_prompt),
         ]
-        tools = self._get_tools()
+        tools = self._get_tools(context)
         total_tool_calls = 0
 
         for iteration in range(_MAX_TOOL_ITERATIONS):
@@ -448,7 +492,7 @@ class Agent:
                 logger.info(f"Agent '{self.config.name}' generating structured response")
                 messages: list[AllMessageValues] = [
                     ChatCompletionSystemMessage(
-                        role="system", content=self.config.system_prompt
+                        role="system", content=self._build_system_prompt(_context)
                     ),
                     ChatCompletionUserMessage(role="user", content=user_prompt),
                 ]
@@ -522,11 +566,11 @@ class Agent:
 
                 messages: list[AllMessageValues] = [
                     ChatCompletionSystemMessage(
-                        role="system", content=self.config.system_prompt
+                        role="system", content=self._build_system_prompt(_context)
                     ),
                     ChatCompletionUserMessage(role="user", content=user_prompt),
                 ]
-                tools = self._get_tools()
+                tools = self._get_tools(_context)
                 total_chunks = 0
                 total_tool_calls = 0
 

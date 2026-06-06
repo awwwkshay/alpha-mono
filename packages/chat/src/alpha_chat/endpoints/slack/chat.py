@@ -37,7 +37,9 @@ class SlackChat(ChatContract):
             signing_secret=os.environ[self.signing_secret_env],
         )
         adapter = SlackAdapter(
-            agent=agent, context=app.context, slack_client=slack_client
+            agent=agent,
+            context=app.get_agent_context(agent_id),
+            slack_client=slack_client,
         )
         self._agent_id = agent_id
         prefix = f"/slack/{agent_id}"

@@ -62,7 +62,10 @@ class LocalFileSystem(FileSystemContract):
             resolved = (self._base / p).resolve()
 
         allowed = [self._base, *self._allowed_paths]
-        if not any(str(resolved).startswith(str(a)) for a in allowed):
+        if not any(
+            resolved == allowed_root or resolved.is_relative_to(allowed_root)
+            for allowed_root in allowed
+        ):
             raise PermissionError(
                 f"Path '{path}' is outside allowed locations. "
                 f"Allowed: {[str(a) for a in allowed]}"
@@ -95,7 +98,10 @@ class LocalFileSystem(FileSystemContract):
     def grep(self, pattern: str, path: str = ".") -> list[str]:
         target = self._resolve(path)
         results: list[str] = []
-        rx = re.compile(pattern)
+        try:
+            rx = re.compile(pattern)
+        except re.error as exc:
+            raise ValueError(f"Invalid regex pattern {pattern!r}: {exc}") from exc
         files = [target] if target.is_file() else target.rglob("*")
         for file in files:
             if not file.is_file():

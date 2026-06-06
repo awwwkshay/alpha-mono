@@ -48,8 +48,41 @@ def _make_agent(*, scorers=None) -> Agent:
     return Agent(config=config)
 
 
-def _make_context() -> AppContext:
-    return AppContext(config=AppConfig(name="test"))
+def _make_context(workspace: _WorkspaceStub | None = None) -> AppContext:
+    return AppContext(config=AppConfig(name="test"), workspace=workspace)
+
+
+class _WorkspaceStub:
+    def __init__(
+        self,
+        *,
+        tool_name: str = "workspace_tool",
+        tool_result: str = '{"ok": true}',
+        prompt_additions: str = "Workspace instructions",
+    ) -> None:
+        self.tool_name = tool_name
+        self.tool_result = tool_result
+        self.prompt_additions = prompt_additions
+        self.calls: list[tuple[str, dict[str, object]]] = []
+
+    def get_tools(self) -> list[dict[str, object]]:
+        return [
+            {
+                "type": "function",
+                "function": {
+                    "name": self.tool_name,
+                    "description": "Workspace tool",
+                    "parameters": {"type": "object", "properties": {}},
+                },
+            }
+        ]
+
+    async def execute_tool(self, name: str, arguments: dict[str, object]) -> str:
+        self.calls.append((name, arguments))
+        return self.tool_result
+
+    def get_system_prompt_additions(self) -> str:
+        return self.prompt_additions
 
 
 def _make_response(content: str | None = "Hello", tool_calls=None):
@@ -147,8 +180,10 @@ async def test_generate_raw_simple_text_response():
     with patch(
         "litellm.acompletion", AsyncMock(return_value=_make_response("Hi there"))
     ):
-        result = await agent._generate_raw("Say hi")
-    assert result == "Hi there"
+        content, iterations, tool_calls = await agent._generate_raw("Say hi")
+    assert content == "Hi there"
+    assert iterations == 1
+    assert tool_calls == 0
 
 
 async def test_generate_raw_normalises_empty_tool_calls_list():
@@ -156,8 +191,10 @@ async def test_generate_raw_normalises_empty_tool_calls_list():
     agent = _make_agent()
     response = _make_response(content="Hello", tool_calls=[])
     with patch("litellm.acompletion", AsyncMock(return_value=response)):
-        result = await agent._generate_raw("Hi")
-    assert result == "Hello"
+        content, iterations, tool_calls = await agent._generate_raw("Hi")
+    assert content == "Hello"
+    assert iterations == 1
+    assert tool_calls == 0
 
 
 async def test_generate_raw_no_content_no_tools_raises():
@@ -195,9 +232,13 @@ async def test_generate_raw_tool_call_cycle():
     second = _make_response(content="The file says: file data")
 
     with patch("litellm.acompletion", AsyncMock(side_effect=[first, second])):
-        result = await agent._generate_raw("Read f.txt", _make_context())
+        content, iterations, tool_calls = await agent._generate_raw(
+            "Read f.txt", _make_context()
+        )
 
-    assert result == "The file says: file data"
+    assert content == "The file says: file data"
+    assert iterations == 2
+    assert tool_calls == 1
     mock_fn.assert_awaited_once()
 
 
@@ -215,9 +256,13 @@ async def test_generate_raw_returns_tool_result_when_no_content_after_tool_cycle
     second = _make_response(content=None, tool_calls=None)
 
     with patch("litellm.acompletion", AsyncMock(side_effect=[first, second])):
-        result = await agent._generate_raw("Read it", _make_context())
+        content, iterations, tool_calls = await agent._generate_raw(
+            "Read it", _make_context()
+        )
 
-    assert result == _WfOutput(result="doubled").model_dump_json()
+    assert content == _WfOutput(result="doubled").model_dump_json()
+    assert iterations == 2
+    assert tool_calls == 1
 
 
 async def test_generate_raw_max_iterations_raises():
@@ -233,6 +278,20 @@ async def test_generate_raw_max_iterations_raises():
     with patch("litellm.acompletion", AsyncMock(return_value=always_tool)):
         with pytest.raises(RuntimeError, match="exceeded"):
             await agent._generate_raw("Loop forever", _make_context())
+
+
+async def test_generate_raw_appends_workspace_prompt_additions():
+    agent = _make_agent()
+    workspace = _WorkspaceStub(prompt_additions="Use the workspace carefully.")
+    mock_completion = AsyncMock(return_value=_make_response("Hello"))
+
+    with patch("litellm.acompletion", mock_completion):
+        await agent._generate_raw("Hi", _make_context(workspace))
+
+    await_args = mock_completion.await_args
+    assert await_args is not None
+    system_message = await_args.kwargs["messages"][0]
+    assert "Use the workspace carefully." in system_message["content"]
 
 
 # ---------------------------------------------------------------------------
@@ -325,6 +384,35 @@ async def test_stream_async_yields_content():
     with patch("litellm.acompletion", AsyncMock(return_value=chunks)):
         parts = [chunk async for chunk in agent.stream_async("Hi", _make_context())]
     assert parts == ["Hello", " world"]
+
+
+async def test_stream_async_yields_content_before_and_after_tool_calls():
+    _, wf_config = _make_workflow_config("lookup")
+    config = AgentConfig(
+        name="A", system_prompt="s", model="m", workflows={"lookup": wf_config}
+    )
+    agent = Agent(config=config)
+
+    tc_delta = MagicMock()
+    tc_delta.index = 0
+    tc_delta.id = "c1"
+    tc_delta.function.name = "lookup"
+    tc_delta.function.arguments = '{"value": 1}'
+
+    first_turn = _AsyncChunks(
+        [
+            _make_stream_chunk("draft before tool"),
+            _make_stream_chunk(tool_calls=[tc_delta]),
+        ]
+    )
+    second_turn = _AsyncChunks([_make_stream_chunk("final after tool")])
+
+    with patch(
+        "litellm.acompletion", AsyncMock(side_effect=[first_turn, second_turn])
+    ):
+        parts = [chunk async for chunk in agent.stream_async("Hi", _make_context())]
+
+    assert parts == ["draft before tool", "final after tool"]
 
 
 # ---------------------------------------------------------------------------
@@ -455,12 +543,56 @@ async def test_agent_with_workflow_tool_invokes_workflow():
     second = _make_response(content="The result is doubled")
 
     with patch("litellm.acompletion", AsyncMock(side_effect=[first, second])):
-        result = await agent._generate_raw("Double 5", _make_context())
+        content, iterations, tool_calls = await agent._generate_raw(
+            "Double 5", _make_context()
+        )
 
-    assert result == "The result is doubled"
+    assert content == "The result is doubled"
+    assert iterations == 2
+    assert tool_calls == 1
     mock_fn.assert_awaited_once()
     call_args = mock_fn.call_args
     assert call_args[0][0].value == 5
+
+
+def test_agent_get_tools_includes_workspace_tools():
+    agent = _make_agent()
+    workspace = _WorkspaceStub(tool_name="workspace_search")
+
+    tools = agent._get_tools(_make_context(workspace))
+
+    assert tools is not None
+    names = [t["function"]["name"] for t in tools]
+    assert "workspace_search" in names
+
+
+def test_agent_get_tools_rejects_duplicate_workspace_tool_names():
+    _, wf_config = _make_workflow_config("read_file")
+    config = AgentConfig(
+        name="A", system_prompt="s", model="m", workflows={"read_file": wf_config}
+    )
+    agent = Agent(config=config)
+    workspace = _WorkspaceStub(tool_name="read_file")
+
+    with pytest.raises(ValueError, match="duplicate tool name"):
+        agent._get_tools(_make_context(workspace))
+
+
+async def test_dispatch_tool_executes_workspace_tool():
+    agent = _make_agent()
+    workspace = _WorkspaceStub(
+        tool_name="workspace_read",
+        tool_result='{"content":"workspace data"}',
+    )
+
+    result = await agent._dispatch_tool(
+        "workspace_read",
+        {"path": "notes.txt"},
+        _make_context(workspace),
+    )
+
+    assert result == '{"content":"workspace data"}'
+    assert workspace.calls == [("workspace_read", {"path": "notes.txt"})]
 
 
 async def test_agent_workflow_tool_appears_in_tool_list():

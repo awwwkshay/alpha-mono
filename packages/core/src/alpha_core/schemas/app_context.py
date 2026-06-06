@@ -12,6 +12,8 @@ class AppContext:
     config: AppConfig
     workflows: dict[AppId, Any] = field(default_factory=dict)
     agents: dict[AppId, Any] = field(default_factory=dict)
+    workspace: Any | None = None
+    agent_contexts: dict[AppId, Any] = field(default_factory=dict)
 
 
 __all__ = ["AppContext"]

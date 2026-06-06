@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import TYPE_CHECKING, Any
 
@@ -31,6 +32,10 @@ from alpha_core.types.app_id import AppId
 
 if TYPE_CHECKING:
     from fastapi import APIRouter
+
+
+_owned_tracer_provider: TracerProvider | None = None
+_owned_tracer_provider_refcount = 0
 
 
 class AlphaApp:
@@ -68,6 +73,7 @@ class AlphaApp:
         }
         if global_workspace:
             self._workspaces.add(global_workspace)
+        self._agent_workspaces = agent_workspaces
 
         self.agents = {
             agent_id: Agent(config=agent_cfg)
@@ -77,10 +83,23 @@ class AlphaApp:
             app_id: Workflow(config=workflow_config)
             for app_id, workflow_config in config.workflows.items()
         }
+        self._agent_contexts = {
+            agent_id: AppContext(
+                config=self.config,
+                workflows=self.workflows,
+                agents=self.agents,
+                workspace=workspace,
+            )
+            for agent_id, workspace in agent_workspaces.items()
+        }
+        for agent_context in self._agent_contexts.values():
+            agent_context.agent_contexts = self._agent_contexts
         self.context = AppContext(
             config=self.config,
             workflows=self.workflows,
             agents=self.agents,
+            workspace=global_workspace,
+            agent_contexts=self._agent_contexts,
         )
         server_cfg = config.server or ServerConfig()
         if not server_cfg.title:
@@ -94,15 +113,38 @@ class AlphaApp:
                 chat_integration.mount(self, self.agents[agent_app_id], agent_app_id)
 
     def _setup_tracing(self, config: AppConfig) -> None:
+        global _owned_tracer_provider, _owned_tracer_provider_refcount
+
         obs = config.observability
         if obs is None or not obs.enabled:
             return
+        if _owned_tracer_provider is not None:
+            _owned_tracer_provider_refcount += 1
+            self._tracer_provider = _owned_tracer_provider
+            existing_service = (
+                _owned_tracer_provider.resource.attributes.get("service.name", "")
+            )
+            new_service = obs.service_name or config.name
+            if existing_service and existing_service != new_service:
+                logger.warning(
+                    f"Tracing already configured for service='{existing_service}'; "
+                    f"app '{config.name}' (service='{new_service}') will share that "
+                    "provider — its spans will be attributed to the first service name. "
+                    "Create apps with the same service_name or avoid multiple AlphaApp "
+                    "instances in the same process to prevent this."
+                )
+            else:
+                logger.debug("Tracing already configured; reusing global tracer provider")
+            return
+
         service_name = obs.service_name or config.name
         resource = Resource(attributes={"service.name": service_name})
         provider = TracerProvider(resource=resource)
         exporter = OTLPSpanExporter(endpoint=obs.endpoint, insecure=obs.insecure)
         provider.add_span_processor(BatchSpanProcessor(exporter))
         trace.set_tracer_provider(provider)
+        _owned_tracer_provider = provider
+        _owned_tracer_provider_refcount = 1
         self._tracer_provider = provider
         logger.debug(
             f"Tracing enabled: service='{service_name}' endpoint='{obs.endpoint}'"
@@ -120,13 +162,26 @@ class AlphaApp:
         logger.info(f"App '{self.config.name}' setup complete")
 
     async def teardown(self) -> None:
+        global _owned_tracer_provider, _owned_tracer_provider_refcount
+
         logger.debug(f"Tearing down app '{self.config.name}'")
         for workspace in self._workspaces:
             await workspace.teardown()
         if self._tracer_provider is not None:
-            self._tracer_provider.force_flush()
-            self._tracer_provider.shutdown()
-            logger.debug("Tracer provider flushed and shut down")
+            await asyncio.to_thread(self._tracer_provider.force_flush)
+            if self._tracer_provider is _owned_tracer_provider:
+                _owned_tracer_provider_refcount = max(
+                    0, _owned_tracer_provider_refcount - 1
+                )
+                if _owned_tracer_provider_refcount == 0:
+                    await asyncio.to_thread(self._tracer_provider.shutdown)
+                    _owned_tracer_provider = None
+                    logger.debug("Tracer provider flushed and shut down")
+                else:
+                    logger.debug("Tracer provider flushed")
+            else:
+                logger.debug("Tracer provider flushed")
+            self._tracer_provider = None
         logger.info(f"App '{self.config.name}' teardown complete")
 
     async def __aenter__(self) -> AlphaApp:
@@ -138,6 +193,15 @@ class AlphaApp:
 
     def mount_router(self, router: APIRouter, prefix: str = "") -> None:
         self.server.mount_router(router, prefix=prefix)
+
+    def get_agent_context(self, agent_id: AppId) -> AppContext:
+        try:
+            return self._agent_contexts[agent_id]
+        except KeyError:
+            known = list(self._agent_contexts.keys())
+            raise KeyError(
+                f"No agent context for {agent_id!r}. Known agents: {known}"
+            ) from None
 
     def serve(self) -> None:
         logger.info(f"Starting server for '{self.config.name}'")

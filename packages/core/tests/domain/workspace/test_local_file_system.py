@@ -231,6 +231,18 @@ def test_absolute_path_outside_base_raises(tmp_path):
         fs.read_file("/etc/passwd")
 
 
+def test_sibling_prefix_path_outside_base_raises(tmp_path):
+    base = tmp_path / "ws"
+    sibling = tmp_path / "ws2"
+    base.mkdir()
+    sibling.mkdir()
+    (sibling / "secret.txt").write_text("nope")
+
+    fs = _fs(base)
+    with pytest.raises(PermissionError):
+        fs.read_file(str(sibling / "secret.txt"))
+
+
 def test_allowed_path_permits_access(tmp_path):
     extra = tmp_path / "extra"
     extra.mkdir()
@@ -238,6 +250,18 @@ def test_allowed_path_permits_access(tmp_path):
     fs = _fs(tmp_path, allowed=[extra])
     content = fs.read_file(str(extra / "data.txt"))
     assert content == "allowed data"
+
+
+def test_sibling_prefix_path_outside_allowed_path_raises(tmp_path):
+    allowed = tmp_path / "allowed"
+    sibling = tmp_path / "allowed-2"
+    allowed.mkdir()
+    sibling.mkdir()
+    (sibling / "secret.txt").write_text("nope")
+
+    fs = _fs(tmp_path / "base", allowed=[allowed])
+    with pytest.raises(PermissionError):
+        fs.read_file(str(sibling / "secret.txt"))
 
 
 def test_contained_false_allows_absolute(tmp_path):

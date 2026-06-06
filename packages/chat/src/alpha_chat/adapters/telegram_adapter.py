@@ -33,7 +33,7 @@ class TelegramAdapter:
         if not message or not message.text:
             return
         chat_id = message.chat.id
-        text = message.text
+        text = "[Platform: Telegram]\n" + message.text
 
         with _tracer.start_as_current_span(
             "chat.telegram.message",

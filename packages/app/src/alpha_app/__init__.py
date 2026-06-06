@@ -1,13 +1,3 @@
-from alpha_chat import (
-    ChatContract,
-    GithubClient,
-    SlackChat,
-    SlackClient,
-    TelegramChat,
-    TelegramClient,
-    build_slack_router,
-    build_telegram_router,
-)
 from alpha_core import (
     AgentConfig,
     AgentTool,
@@ -59,6 +49,41 @@ from alpha_app.workspace import (
     Skill,
     Workspace,
 )
+
+_CHAT_EXPORTS = {
+    "ChatContract",
+    "GithubClient",
+    "SlackChat",
+    "SlackClient",
+    "TelegramChat",
+    "TelegramClient",
+    "build_slack_router",
+    "build_telegram_router",
+}
+
+
+def __getattr__(name: str):
+    # Skip dunder/private names and anything not in our declared exports fast,
+    # to avoid an alpha_chat import attempt on every missing-attribute lookup.
+    if name.startswith("_") or name not in _CHAT_EXPORTS:
+        raise AttributeError(f"module 'alpha_app' has no attribute {name!r}")
+    try:
+        import alpha_chat
+    except ImportError as exc:
+        raise ImportError(
+            "Chat integrations are optional. Install alpha-chat to access "
+            f"alpha_app.{name}."
+        ) from exc
+    # Use alpha_chat as the authoritative source — don't re-check _CHAT_EXPORTS here so
+    # that new symbols added to alpha_chat are automatically forwarded once _CHAT_EXPORTS
+    # is updated to include them.
+    try:
+        return getattr(alpha_chat, name)
+    except AttributeError:
+        raise AttributeError(
+            f"alpha_chat does not export {name!r}"
+        ) from None
+
 
 __all__ = [
     # alpha_chat

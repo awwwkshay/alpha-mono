@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from alpha_app import Agent, AgentConfig, SlackChat, TelegramChat
+from alpha_app import Agent, AgentConfig
+from alpha_chat import SlackChat, TelegramChat
 
 from personal_agent.agents.tools.datetime_tool import get_datetime_tool
 from personal_agent.agents.tools.summarise_url_tool import summarise_url_tool
@@ -15,7 +16,7 @@ _PROMPT_PATH = Path(__file__).parents[2] / "prompts" / "jarvis.md"
 personal_agent_config = AgentConfig(
     name="Jarvis",
     system_prompt_md_path=_PROMPT_PATH,
-    model="gemini/gemini-flash-latest",
+    model="claude-sonnet-4-5-20250929",
     tools={
         "get_current_datetime": get_datetime_tool,
         "web_search": web_search_tool,

@@ -294,6 +294,12 @@ class Workflow(Executable[InputT, OutputT]):
                 current_data: Any = input_data
                 for step in self.steps.values():
                     current_data = await step.execute(current_data, context)
+                try:
+                    current_data = _coerce(current_data, self.config.output_schema)
+                except ValidationError as e:
+                    raise WorkflowStepOutputError(
+                        self.config.name, self.config.output_schema, e
+                    ) from e
                 logger.info(f"Finished execution of workflow '{self.config.name}'")
                 return current_data
             except Exception as exc:

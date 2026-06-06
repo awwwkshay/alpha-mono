@@ -1,39 +1,30 @@
 from __future__ import annotations
 
-import asyncio
 import json
 from typing import TYPE_CHECKING, Any
 
-from fastapi import APIRouter, HTTPException, Request
-from slack_sdk.signature import SignatureVerifier
+from fastapi import APIRouter, BackgroundTasks, Request
 
+from alpha_chat.endpoints.slack._utils import verify_slack_signature
 from alpha_chat.log import logger
 
 if TYPE_CHECKING:
     from alpha_chat.adapters.slack_adapter import SlackAdapter
 
 # Deduplicates Slack retries — Slack resends events if it doesn't get a 200 within 3s.
-_SEEN_EVENT_IDS: set[str] = set()
+# Stored as an ordered dict so we can evict the oldest entries without wiping the whole set.
+_SEEN_EVENT_IDS: dict[str, None] = {}
 _MAX_SEEN = 2000
-
-
-def _verify_slack_signature(
-    signing_secret: str, request_body: bytes, headers: dict
-) -> None:
-    verifier = SignatureVerifier(signing_secret)
-    timestamp = headers.get("x-slack-request-timestamp", "")
-    signature = headers.get("x-slack-signature", "")
-    if not verifier.is_valid(request_body.decode(), timestamp, signature):
-        raise HTTPException(status_code=401, detail="Invalid Slack signature")
+_EVICT_COUNT = _MAX_SEEN // 10  # evict 10% (200) when the cap is hit
 
 
 def build_events_router(adapter: SlackAdapter) -> APIRouter:
     events_router = APIRouter()
 
     @events_router.post("/events")
-    async def slack_events(request: Request) -> Any:
+    async def slack_events(request: Request, background_tasks: BackgroundTasks) -> Any:
         body = await request.body()
-        _verify_slack_signature(
+        verify_slack_signature(
             adapter.signing_secret,
             body,
             dict(request.headers),
@@ -51,18 +42,19 @@ def build_events_router(adapter: SlackAdapter) -> APIRouter:
                 if event_id in _SEEN_EVENT_IDS:
                     logger.debug(f"Dropping duplicate Slack event {event_id}")
                     return {"ok": True}
-                _SEEN_EVENT_IDS.add(event_id)
+                _SEEN_EVENT_IDS[event_id] = None
                 if len(_SEEN_EVENT_IDS) > _MAX_SEEN:
-                    _SEEN_EVENT_IDS.clear()
+                    for k in list(_SEEN_EVENT_IDS.keys())[:_EVICT_COUNT]:
+                        del _SEEN_EVENT_IDS[k]
 
             event = payload.get("event", {})
             if (
-                event.get("type") == "message"
+                event.get("type") in ("message", "app_mention")
                 and not event.get("bot_id")
                 and not event.get("subtype")
             ):
                 logger.info(f"Slack message event from user={event.get('user')}")
-                asyncio.create_task(adapter.handle_event(event))
+                background_tasks.add_task(adapter.handle_event, event)
 
         return {"ok": True}
 

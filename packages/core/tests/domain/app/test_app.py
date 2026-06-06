@@ -116,6 +116,36 @@ def test_per_agent_workspace_overrides_global(tmp_path):
     assert len(app._workspaces) == 2
 
 
+def test_agent_context_uses_assigned_workspace(tmp_path):
+    global_ws = WorkspaceConfig(
+        name="global",
+        filesystem=LocalFilesystemConfig(base_path=tmp_path / "global"),
+    )
+    agent_ws = WorkspaceConfig(
+        name="agent",
+        filesystem=LocalFilesystemConfig(base_path=tmp_path / "agent"),
+    )
+    config = _simple_config(
+        agents={"a": _agent_cfg("A", workspace=agent_ws), "b": _agent_cfg("B")},
+        workspace=global_ws,
+    )
+    with patch("alpha_app.app.app.load_dotenv"):
+        app = AlphaApp(config=config)
+
+    agent_context = app.get_agent_context("a")
+    fallback_context = app.get_agent_context("b")
+
+    assert agent_context.workspace is not None
+    assert fallback_context.workspace is not None
+    assert fallback_context.workspace is app.context.workspace
+    assert agent_context.workspace is not fallback_context.workspace
+    assert agent_context.workspace.config.name == "agent"
+    assert fallback_context.workspace.config.name == "global"
+    assert agent_context.agent_contexts is app.context.agent_contexts
+    assert fallback_context.agent_contexts is app.context.agent_contexts
+    assert agent_context.agent_contexts["b"] is fallback_context
+
+
 # ---------------------------------------------------------------------------
 # Lifecycle: setup / teardown
 # ---------------------------------------------------------------------------

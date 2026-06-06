@@ -38,6 +38,7 @@ class TelegramChat(ChatContract):
     """
 
     token_env: str = field(default="TELEGRAM_BOT_TOKEN")
+    secret_token_env: str = field(default="TELEGRAM_WEBHOOK_SECRET")
     base_url: str | None = field(default=None)
 
     def mount(self, app: Any, agent: Any, agent_id: str) -> None:
@@ -46,19 +47,44 @@ class TelegramChat(ChatContract):
         from alpha_chat.endpoints.telegram.webhook import build_telegram_router
 
         self._agent_id = agent_id
+        _raw = os.environ.get(self.secret_token_env)
+        if _raw is not None and not _raw:
+            raise ValueError(
+                f"Environment variable '{self.secret_token_env}' is set but empty; "
+                "provide a non-empty token or remove the variable to disable webhook auth"
+            )
+        if _raw is None:
+            logger.warning(
+                f"'{self.secret_token_env}' is not set; the Telegram webhook endpoint "
+                "has no authentication and will accept requests from any caller. "
+                "Set this variable to a random secret to enable signature verification."
+            )
+        self._secret_token: str | None = _raw
         self._client = TelegramClient(token=os.environ[self.token_env])
         adapter = TelegramAdapter(
-            agent=agent, context=app.context, telegram_client=self._client
+            agent=agent,
+            context=app.get_agent_context(agent_id),
+            telegram_client=self._client,
         )
         prefix = f"/telegram/{agent_id}"
-        app.mount_router(build_telegram_router(adapter), prefix=prefix)
+        app.mount_router(
+            build_telegram_router(adapter, secret_token=self._secret_token),
+            prefix=prefix,
+        )
 
     async def setup(self) -> None:
         base = self.base_url or os.environ.get(_PUBLIC_URL_ENV)
-        if base:
-            url = f"{base.rstrip('/')}/telegram/{self._agent_id}/webhook"
-            await self._client.set_webhook(url)
+        if not base:
+            return
+        url = f"{base.rstrip('/')}/telegram/{self._agent_id}/webhook"
+        try:
+            await self._client.set_webhook(url, secret_token=self._secret_token)
             logger.info(f"Telegram handlers listening at {url}")
+        except Exception as exc:
+            logger.warning(
+                f"Failed to register Telegram webhook at {url}: {exc}. "
+                "Telegram updates will not be received until the webhook is registered."
+            )
 
 
 __all__ = ["TelegramChat"]

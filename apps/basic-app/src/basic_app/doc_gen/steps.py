@@ -22,9 +22,10 @@ class _ExtractApiResult(BaseModel):
 
 async def read_source_file(input: DocGenInput, context: AppContext) -> FileContent:
     agent = context.agents["reader"]
+    agent_ctx = context.agent_contexts.get("reader", context)
     source = await agent.generate_async(
         f"Read the file at path: {input.file_path}",
-        context,
+        agent_ctx,
     )
     return FileContent(file_path=input.file_path, source=source.strip())
 

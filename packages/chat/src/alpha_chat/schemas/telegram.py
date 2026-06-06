@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class TelegramUser(BaseModel):
@@ -22,7 +22,7 @@ class TelegramMessage(BaseModel):
     message_id: int
     date: int
     chat: TelegramChat
-    from_: TelegramUser | None = None
+    from_: TelegramUser | None = Field(default=None, alias="from")
     text: str | None = None
 
     model_config = {"populate_by_name": True}
