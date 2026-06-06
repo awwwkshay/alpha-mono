@@ -5,13 +5,12 @@ from textwrap import dedent
 from alpha_app import (
     Agent,
     AnswerRelevancyScorer,
-    AppContext,
     CompletenessScorer,
     EvalCase,
     EvalResult,
-    Scorer,
     run_evals,
 )
+from alpha_core import AppContext, Scorer
 
 from basic_app.agents import EVAL_MODEL
 

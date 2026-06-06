@@ -53,7 +53,8 @@ FastAPI `APIRouter` factories. All Slack endpoints verify the `X-Slack-Signature
 `SlackChat` is a `ChatContract` that lets you declare a Slack integration directly on an `AgentConfig`. `AlphaApp` reads the `chat` list and mounts the correct router automatically — no manual wiring needed.
 
 ```python
-from alpha_app import AgentConfig, SlackChat
+from alpha_core import AgentConfig
+from alpha_chat import SlackChat
 
 AgentConfig(
     name="Jarvis",
@@ -96,6 +97,6 @@ app.include_router(build_slack_router(adapter), prefix="/slack")
 
 ## See also
 
-- [alpha-app](../app/README.md) — framework that re-exports this package
+- [alpha-app](../app/README.md) — runtime framework that can host chat integrations
 - [personal-agent](../../apps/personal-agent/README.md) — example app using Slack integration
 - [Architecture](../../docs/architecture.md) — chat integration design details

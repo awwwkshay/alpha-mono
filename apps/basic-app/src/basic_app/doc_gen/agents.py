@@ -3,9 +3,11 @@ from __future__ import annotations
 from pathlib import Path
 
 from alpha_app import (
-    AgentConfig,
     AnswerRelevancyScorer,
     CompletenessScorer,
+)
+from alpha_core import (
+    AgentConfig,
     LocalFilesystemConfig,
     ScorerConfig,
     WorkspaceConfig,

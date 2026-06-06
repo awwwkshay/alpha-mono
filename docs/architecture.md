@@ -18,10 +18,19 @@ alpha-mono is structured around three layers:
 
 Everything is configured via Pydantic models (`AppConfig`, `WorkflowConfig`, `AgentConfig`, `WorkspaceConfig`) and validated at construction time — schema mismatches are errors before any LLM call is made.
 
-The codebase is split across two packages:
+The codebase is split across three packages:
 
 - **`alpha-core`** — schemas, contracts, and shared types (the interface layer)
 - **`alpha-app`** — concrete implementations: `AlphaApp`, `Agent`, `Workflow`, `Workspace`, `Evals`
+- **`alpha-chat`** — optional chat integrations: Slack, Telegram, GitHub clients, adapters, and routers
+
+Use package-native imports at application boundaries:
+
+```python
+from alpha_core import AgentConfig, AppConfig, WorkflowConfig
+from alpha_app import AlphaApp, Agent, Workflow
+from alpha_chat import SlackChat, build_slack_router
+```
 
 ---
 

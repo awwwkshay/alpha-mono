@@ -5,9 +5,9 @@ import logging
 from pathlib import Path
 from textwrap import dedent
 
-from alpha_app import (
+from alpha_app import AlphaApp
+from alpha_core import (
     AgentConfig,
-    AlphaApp,
     AppConfig,
     LocalFilesystemConfig,
     LocalSandboxConfig,

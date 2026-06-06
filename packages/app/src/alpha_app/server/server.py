@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, Any
 
 from alpha_app.log import logger
-from alpha_core.schemas.server_config import CorsConfig, ServerConfig
+from alpha_core import CorsConfig, ServerConfig
 
 if TYPE_CHECKING:
     from fastapi import FastAPI

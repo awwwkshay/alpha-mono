@@ -72,6 +72,19 @@ CodeSummary
         └── standard → ReviewReport
 ```
 
+**Import guide:**
+
+```python
+# Define configuration, schemas, contracts, and tool abstractions.
+from alpha_core import AgentConfig, AppConfig, AppContext, WorkflowConfig
+
+# Run agents, apps, workflows, workspaces, and eval implementations.
+from alpha_app import Agent, AlphaApp, Workflow
+
+# Add optional chat integrations.
+from alpha_chat import SlackChat, SlackClient, build_slack_router
+```
+
 **Defining a step:**
 
 ```python
@@ -159,7 +172,8 @@ The `alpha-chat` package provides ready-to-use clients and FastAPI endpoints for
 Declare chat integrations directly on an `AgentConfig`:
 
 ```python
-from alpha_app import AgentConfig, SlackChat
+from alpha_core import AgentConfig
+from alpha_chat import SlackChat
 
 AgentConfig(
     name="Jarvis",
@@ -192,5 +206,5 @@ The Slack router exposes `/events` (Events API + URL verification), `/commands` 
 | Package       | Description                                                                  |
 | ------------- | ---------------------------------------------------------------------------- |
 | `alpha-core`  | Schemas, contracts, and interfaces — the framework's type layer              |
-| `alpha-app`   | Implementations — `Agent`, `AlphaApp`, `Workflow`, `Workspace`, `Evals`      |
+| `alpha-app`   | Runtime implementations — `Agent`, `AlphaApp`, `Workflow`, `Workspace`, `Evals` |
 | `alpha-chat`  | Chat integrations — Slack, Telegram, GitHub clients, adapters, and endpoints |

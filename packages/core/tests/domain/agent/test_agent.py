@@ -11,15 +11,16 @@ from alpha_app.agent.agent import (
     _accumulate_tool_call_delta,
     _workflow_to_tool,
 )
-from alpha_core.contracts.evals.scorer_contract import (
+from alpha_core import (
+    AgentConfig,
+    AppConfig,
+    AppContext,
     Scorer,
     ScorerConfig,
     ScorerResult,
+    WorkflowConfig,
+    WorkflowStepConfig,
 )
-from alpha_core.schemas.agent_config import AgentConfig
-from alpha_core.schemas.app_config import AppConfig
-from alpha_core.schemas.app_context import AppContext
-from alpha_core.schemas.workflow_config import WorkflowConfig, WorkflowStepConfig
 from litellm.types.llms.openai import ChatCompletionAssistantToolCall
 
 

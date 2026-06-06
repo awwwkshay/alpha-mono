@@ -5,13 +5,12 @@ from pathlib import Path
 from alpha_app import (
     Agent,
     AnswerRelevancyScorer,
-    AppContext,
     CompletenessScorer,
     EvalCase,
     EvalResult,
-    Scorer,
     run_evals,
 )
+from alpha_core import AppContext, Scorer
 
 _EVAL_MODEL = "gemini/gemini-2.0-flash"
 _SOURCE_DIR = Path(__file__).parents[3]

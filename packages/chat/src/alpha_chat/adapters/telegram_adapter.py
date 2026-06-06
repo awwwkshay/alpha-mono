@@ -5,7 +5,7 @@ from typing import Any
 from opentelemetry import trace
 from opentelemetry.trace import SpanKind, Status, StatusCode
 
-from alpha_core.schemas.app_context import AppContext
+from alpha_core import AppContext
 
 from alpha_chat.clients.telegram_client import TelegramClient
 from alpha_chat.log import logger

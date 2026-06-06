@@ -1,15 +1,11 @@
 from __future__ import annotations
 
 from html.parser import HTMLParser
-from typing import TYPE_CHECKING
 
 import httpx
 from pydantic import BaseModel, Field
 
-from alpha_app import AgentTool
-
-if TYPE_CHECKING:
-    from alpha_app import AppContext
+from alpha_core import AgentTool, AppContext
 
 
 class SummariseUrlInput(BaseModel):

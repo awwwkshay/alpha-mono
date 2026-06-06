@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 
-from alpha_core.contracts.evals.scorer_contract import Scorer, ScorerResult
+from alpha_core import Scorer, ScorerResult
 
 _PROMPT = """\
 Evaluate how complete and thorough the following response is for the given input.

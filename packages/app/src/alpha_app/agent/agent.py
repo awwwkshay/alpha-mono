@@ -72,11 +72,8 @@ from alpha_app.constants.otel_constants import (
     TOOL_RESULT_LENGTH,
     TOOL_TYPE,
 )
-from alpha_core.domain.agent.tool.agent_tool import AgentTool
 from alpha_app.evals.runner import run_scorers
-from alpha_core.contracts.evals.scorer_contract import ScorerResult
-from alpha_core.schemas.agent_config import AgentConfig
-from alpha_core.schemas.app_context import AppContext
+from alpha_core import AgentConfig, AgentTool, AppContext, ScorerResult
 
 if TYPE_CHECKING:
     from litellm.litellm_core_utils.streaming_handler import CustomStreamWrapper

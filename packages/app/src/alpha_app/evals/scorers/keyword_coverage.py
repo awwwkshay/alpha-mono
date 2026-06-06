@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from alpha_core.contracts.evals.scorer_contract import Scorer, ScorerResult
+from alpha_core import Scorer, ScorerResult
 
 
 class KeywordCoverageScorer(Scorer):

@@ -4,7 +4,7 @@ from __future__ import annotations
 import pytest
 
 from alpha_app.workspace.sandboxes.local_sandbox import LocalSandbox
-from alpha_core.schemas.sandbox import BackgroundCommandResult, CommandResult
+from alpha_core import BackgroundCommandResult, CommandResult
 
 
 # ---------------------------------------------------------------------------

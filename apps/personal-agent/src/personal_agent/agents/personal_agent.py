@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from alpha_app import Agent, AgentConfig
+from alpha_app import Agent
+from alpha_core import AgentConfig
 from alpha_chat import SlackChat, TelegramChat
 
 from personal_agent.agents.tools.datetime_tool import get_datetime_tool

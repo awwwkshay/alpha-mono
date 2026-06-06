@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from alpha_core.schemas.workflow_config import (
+from alpha_core import (
     ConditionalWorkflowStepConfig,
     ParallelWorkflowStepConfig,
     WorkflowConfig,

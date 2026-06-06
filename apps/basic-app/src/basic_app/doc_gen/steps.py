@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel
 
-from alpha_core.schemas.app_context import AppContext
+from alpha_core import AppContext
 
 from basic_app.doc_gen.schemas import (
     AnalysisDraft,

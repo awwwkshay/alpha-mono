@@ -12,9 +12,9 @@ from alpha_app.workflow.workflow import (
     WorkflowStepInputError,
     WorkflowStepOutputError,
 )
-from alpha_core.schemas.app_config import AppConfig
-from alpha_core.schemas.app_context import AppContext
-from alpha_core.schemas.workflow_config import (
+from alpha_core import (
+    AppConfig,
+    AppContext,
     ConditionalWorkflowStepConfig,
     ParallelWorkflowStepConfig,
     WorkflowConfig,

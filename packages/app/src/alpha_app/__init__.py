@@ -1,3 +1,5 @@
+# Backwards-compatible core re-exports. New application code should import
+# config, contracts, context, and tool abstractions directly from alpha_core.
 from alpha_core import (
     AgentConfig,
     AgentTool,
@@ -86,7 +88,8 @@ def __getattr__(name: str):
 
 
 __all__ = [
-    # alpha_chat
+    # Backwards-compatible alpha_chat re-exports. Prefer importing these from
+    # alpha_chat in new application code.
     "ChatContract",
     "GithubClient",
     "SlackChat",

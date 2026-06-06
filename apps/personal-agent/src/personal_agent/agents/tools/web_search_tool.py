@@ -2,18 +2,14 @@ from __future__ import annotations
 
 import asyncio
 from html.parser import HTMLParser
-from typing import TYPE_CHECKING
 
 import httpx
 from ddgs import DDGS
 from pydantic import BaseModel, Field
 
-from alpha_app import AgentTool
+from alpha_core import AgentTool, AppContext
 
 from personal_agent.log import logger
-
-if TYPE_CHECKING:
-    from alpha_app import AppContext
 
 
 class WebSearchInput(BaseModel):

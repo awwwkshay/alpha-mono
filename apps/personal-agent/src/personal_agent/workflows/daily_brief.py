@@ -1,14 +1,16 @@
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING
 
-from alpha_app import ParallelWorkflowStepConfig, WorkflowConfig, WorkflowStepConfig
 from ddgs import DDGS
 from pydantic import BaseModel, Field
 
-if TYPE_CHECKING:
-    from alpha_app import AppContext
+from alpha_core import (
+    AppContext,
+    ParallelWorkflowStepConfig,
+    WorkflowConfig,
+    WorkflowStepConfig,
+)
 
 
 class DailyBriefInput(BaseModel):

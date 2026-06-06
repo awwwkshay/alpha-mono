@@ -25,10 +25,7 @@ from alpha_app.log import logger
 from alpha_app.server.server import Server
 from alpha_app.workflow.workflow import Workflow
 from alpha_app.workspace.workspace import Workspace
-from alpha_core.schemas.app_config import AppConfig
-from alpha_core.schemas.app_context import AppContext
-from alpha_core.schemas.server_config import ServerConfig
-from alpha_core.types.app_id import AppId
+from alpha_core import AppConfig, AppContext, AppId, ServerConfig
 
 if TYPE_CHECKING:
     from fastapi import APIRouter

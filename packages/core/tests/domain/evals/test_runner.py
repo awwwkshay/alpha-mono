@@ -3,14 +3,14 @@ from __future__ import annotations
 from unittest.mock import AsyncMock, MagicMock
 
 from alpha_app.evals.runner import EvalCase, EvalResult, run_evals, run_scorers
-from alpha_core.contracts.evals.scorer_contract import (
+from alpha_core import (
+    AppConfig,
+    AppContext,
     Scorer,
     SamplingConfig,
     ScorerConfig,
     ScorerResult,
 )
-from alpha_core.schemas.app_config import AppConfig
-from alpha_core.schemas.app_context import AppContext
 
 
 class _FixedScorer(Scorer):

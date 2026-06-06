@@ -6,8 +6,7 @@ import re
 import shutil
 from pathlib import Path
 
-from alpha_core.contracts.workspace.file_system_contract import FileSystemContract
-from alpha_core.schemas.filesystem import FileStat
+from alpha_core import FileStat, FileSystemContract
 
 
 class LocalFileSystem(FileSystemContract):

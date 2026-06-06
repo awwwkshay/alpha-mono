@@ -26,20 +26,21 @@ from alpha_app.constants.otel_constants import (
 
 from alpha_app.log import logger
 
-from alpha_core.contracts.workspace.file_system_contract import FileSystemContract
-from alpha_core.contracts.workspace.sandbox_contract import SandboxContract
+from alpha_core import (
+    E2BSandboxConfig,
+    FileSystemContract,
+    LocalFilesystemConfig,
+    LocalSandboxConfig,
+    S3FilesystemConfig,
+    SandboxContract,
+)
 from alpha_app.workspace.file_systems.local_file_system import LocalFileSystem
 from alpha_app.workspace.file_systems.s3_file_system import S3FileSystem
 from alpha_app.workspace.sandboxes.e2b_sandbox import E2BSandbox
 from alpha_app.workspace.sandboxes.local_sandbox import LocalSandbox
-from alpha_core.schemas.filesystem_config import (
-    LocalFilesystemConfig,
-    S3FilesystemConfig,
-)
-from alpha_core.schemas.sandbox_config import E2BSandboxConfig, LocalSandboxConfig
 
 if TYPE_CHECKING:
-    from alpha_core.schemas.workspace_config import WorkspaceConfig
+    from alpha_core import WorkspaceConfig
 
 
 # ---------------------------------------------------------------------------

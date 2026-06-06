@@ -7,7 +7,14 @@ from opentelemetry import trace
 from opentelemetry.trace import Status, StatusCode
 from pydantic import BaseModel, ValidationError
 
-from alpha_core.contracts.executable import Executable
+from alpha_core import (
+    AppContext,
+    ConditionalWorkflowStepConfig,
+    Executable,
+    ParallelWorkflowStepConfig,
+    WorkflowConfig,
+    WorkflowStepConfig,
+)
 from alpha_app.log import logger
 from alpha_app.constants.otel_constants import (
     ERROR_MESSAGE,
@@ -28,14 +35,6 @@ from alpha_app.constants.otel_constants import (
     WORKFLOW_OUTPUT_SCHEMA,
     WORKFLOW_STEP_COUNT,
 )
-from alpha_core.schemas.app_context import AppContext
-from alpha_core.schemas.workflow_config import (
-    ConditionalWorkflowStepConfig,
-    ParallelWorkflowStepConfig,
-    WorkflowConfig,
-    WorkflowStepConfig,
-)
-
 WorkflowStepConfig.model_rebuild()
 ParallelWorkflowStepConfig.model_rebuild()
 ConditionalWorkflowStepConfig.model_rebuild()

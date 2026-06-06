@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, cast
 from opentelemetry import trace
 from opentelemetry.trace import SpanKind, Status, StatusCode
 
-from alpha_core.schemas.app_context import AppContext
+from alpha_core import AppContext
 
 if TYPE_CHECKING:
     from litellm.types.llms.openai import AllMessageValues

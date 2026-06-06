@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 from alpha_app import (
-    AgentConfig,
     AnswerRelevancyScorer,
     CompletenessScorer,
+    ToxicityScorer,
+)
+from alpha_core import (
+    AgentConfig,
     SamplingConfig,
     ScorerConfig,
-    ToxicityScorer,
 )
 
 EVAL_MODEL = "gemini/gemini-2.0-flash"

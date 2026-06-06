@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from textwrap import dedent
 
-from alpha_core.schemas.app_context import AppContext
+from alpha_core import AppContext
 
 from basic_app.schemas import (
     CodeReview,

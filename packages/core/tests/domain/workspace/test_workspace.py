@@ -6,9 +6,7 @@ from pathlib import Path
 import pytest
 
 from alpha_app.workspace.workspace import Workspace, _load_skills
-from alpha_core.schemas.filesystem_config import LocalFilesystemConfig
-from alpha_core.schemas.sandbox_config import LocalSandboxConfig
-from alpha_core.schemas.workspace_config import WorkspaceConfig
+from alpha_core import LocalFilesystemConfig, LocalSandboxConfig, WorkspaceConfig
 
 
 # ---------------------------------------------------------------------------
@@ -157,7 +155,7 @@ def _ws_with_skill(tmp_path: Path) -> Workspace:
     (skill_dir / "skill.md").write_text("instructions")
     (skill_dir / "data.json").write_text('{"x": 1}')
 
-    from alpha_core.schemas.workspace_config import SkillsConfig
+    from alpha_core import SkillsConfig
 
     cfg = WorkspaceConfig(
         name="test",

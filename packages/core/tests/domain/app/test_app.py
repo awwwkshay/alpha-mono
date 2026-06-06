@@ -5,10 +5,7 @@ from unittest.mock import AsyncMock, patch
 import pytest
 
 from alpha_app.app.app import AlphaApp
-from alpha_core.schemas.agent_config import AgentConfig
-from alpha_core.schemas.app_config import AppConfig
-from alpha_core.schemas.filesystem_config import LocalFilesystemConfig
-from alpha_core.schemas.workspace_config import WorkspaceConfig
+from alpha_core import AgentConfig, AppConfig, LocalFilesystemConfig, WorkspaceConfig
 
 
 # ---------------------------------------------------------------------------
@@ -44,7 +41,7 @@ def test_init_creates_agents():
 
 def test_init_creates_workflows(tmp_path):
     from pydantic import BaseModel
-    from alpha_core.schemas.workflow_config import WorkflowConfig, WorkflowStepConfig
+    from alpha_core import WorkflowConfig, WorkflowStepConfig
 
     class In(BaseModel):
         x: str
@@ -214,7 +211,7 @@ async def test_context_manager_calls_setup_and_teardown(tmp_path):
 
 async def test_execute_workflow_delegates_to_workflow():
     from pydantic import BaseModel
-    from alpha_core.schemas.workflow_config import WorkflowConfig, WorkflowStepConfig
+    from alpha_core import WorkflowConfig, WorkflowStepConfig
 
     class In(BaseModel):
         v: int

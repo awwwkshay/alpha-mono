@@ -7,11 +7,11 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Literal
 
-from alpha_core.contracts.workspace.sandbox_contract import SandboxContract
-from alpha_core.schemas.sandbox import (
+from alpha_core import (
     BackgroundCommandResult,
     CommandResult,
     ProcessOutput,
+    SandboxContract,
 )
 
 

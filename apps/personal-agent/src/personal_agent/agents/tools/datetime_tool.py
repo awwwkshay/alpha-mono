@@ -1,14 +1,9 @@
 from __future__ import annotations
 
 import datetime
-from typing import TYPE_CHECKING
-
 from pydantic import BaseModel
 
-from alpha_app import AgentTool
-
-if TYPE_CHECKING:
-    from alpha_app import AppContext
+from alpha_core import AgentTool, AppContext
 
 
 class GetDatetimeInput(BaseModel):

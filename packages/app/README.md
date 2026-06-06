@@ -61,18 +61,19 @@ results = await run_evals(
 )
 ```
 
-### Chat integrations (re-exported from alpha-chat)
+### Chat integrations
 
-`alpha-app` re-exports everything from `alpha-chat` so applications only need to depend on `alpha-app`:
+Chat integrations live in `alpha-chat`. Import them from there so package ownership stays clear:
 
 ```python
-from alpha_app import SlackChat, SlackClient, SlackAdapter, build_slack_router
+from alpha_chat import SlackChat, SlackClient, SlackAdapter, build_slack_router
 ```
 
 ## Quick start
 
 ```python
-from alpha_app import AlphaApp, AppConfig, AgentConfig, WorkflowConfig, WorkflowStepConfig
+from alpha_app import AlphaApp
+from alpha_core import AgentConfig, AppConfig, WorkflowConfig, WorkflowStepConfig
 
 async def my_step(input: MyInput, context: AppContext) -> MyOutput:
     agent = context.agents["my_agent"]
