@@ -1,0 +1,24 @@
+version: 1
+app:
+  name: personal-agent
+agents:
+  jarvis:
+    id: jarvis
+    name: Jarvis
+    model: claude-sonnet-4-5-20250929
+    description: Personal AI assistant connected to Slack and Telegram.
+    system_prompt: null
+    chat:
+    - id: slack_chat
+      type: slack
+      token_env: SLACK_BOT_TOKEN
+      signing_secret_env: SLACK_SIGNING_SECRET
+    - id: telegram_chat
+      type: telegram
+      token_env: TELEGRAM_BOT_TOKEN
+      secret_token_env: TELEGRAM_WEBHOOK_SECRET
+    module: personal_agent.agents.jarvis:AGENT
+workflows: {}
+workspaces: {}
+interfaces: []
+tools: []

@@ -13,7 +13,8 @@ class SlackChat(ChatContract):
     """
     Slack chat integration for ``AgentConfig.chat``.
 
-    Reads bot token and signing secret from environment variables at mount time.
+    Reads bot token and signing secret from environment variables at mount time
+    unless explicit ``token`` / ``signing_secret`` values are passed.
     Override ``token_env`` / ``signing_secret_env`` to use custom variable names.
 
     Example::
@@ -24,8 +25,11 @@ class SlackChat(ChatContract):
         )
     """
 
+    id: str | None = field(default=None)
     token_env: str = field(default="SLACK_BOT_TOKEN")
     signing_secret_env: str = field(default="SLACK_SIGNING_SECRET")
+    token: str | None = field(default=None, repr=False)
+    signing_secret: str | None = field(default=None, repr=False)
 
     def mount(self, app: Any, agent: Any, agent_id: str) -> None:
         from clay_chat.adapters.slack_adapter import SlackAdapter
@@ -33,8 +37,8 @@ class SlackChat(ChatContract):
         from clay_chat.endpoints.slack.router import build_slack_router
 
         slack_client = SlackClient(
-            token=os.environ[self.token_env],
-            signing_secret=os.environ[self.signing_secret_env],
+            token=self.token or os.environ[self.token_env],
+            signing_secret=self.signing_secret or os.environ[self.signing_secret_env],
         )
         adapter = SlackAdapter(
             agent=agent,
@@ -43,11 +47,15 @@ class SlackChat(ChatContract):
         )
         self._agent_id = agent_id
         prefix = f"/slack/{agent_id}"
+        if self.id:
+            prefix = f"{prefix}/{self.id}"
         app.mount_router(build_slack_router(adapter), prefix=prefix)
 
     async def setup(self) -> None:
         base = os.environ.get("PUBLIC_URL", "").rstrip("/")
         prefix = f"/slack/{self._agent_id}"
+        if self.id:
+            prefix = f"{prefix}/{self.id}"
         base_url = f"{base}{prefix}" if base else prefix
         logger.info(
             f"Slack handlers listening at {base_url}/{{events,commands,actions}}"

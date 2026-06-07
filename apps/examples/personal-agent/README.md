@@ -45,6 +45,12 @@ uv run personal-agent
 
 The server starts on `http://0.0.0.0:8001`. Point your Slack app's **Event Subscriptions** request URL to `https://<your-host>/events`.
 
+Open Clay Studio for this app:
+
+```bash
+uv run clay studio
+```
+
 ## Slack app configuration
 
 Required bot token scopes:

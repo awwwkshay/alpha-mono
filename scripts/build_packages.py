@@ -58,7 +58,7 @@ def build_studio_client(
         run([vp, "install"], cwd=STUDIO_CLIENT)
     if not skip_check:
         run([vp, "check"], cwd=STUDIO_CLIENT)
-    run([vp, "run", "build", "--", "--mode", environment], cwd=STUDIO_CLIENT)
+    run([vp, "build", "--mode", environment], cwd=STUDIO_CLIENT)
 
 
 def copy_studio_dist() -> None:

@@ -53,6 +53,7 @@ Avoid unrelated refactors.
 
 - Follow existing project patterns and naming.
 - Keep package names stable unless the request explicitly asks to rename them.
+- For Studio server LSP/Jedi completion changes, always include workspace package source roots for `clay_core`, `clay_app`, and `clay_chat`, and prioritize those modules in Python import completion contexts.
 - Update all path-sensitive config when files move:
   - root `pyproject.toml` workspace members and uv sources
   - package/app `pyproject.toml` files when relative paths or build metadata change

@@ -19,3 +19,24 @@ workspaces:
       env: {}
       timeout: 30
       isolation: none
+interfaces: []
+tools:
+- tool_id: qualify_lead
+  name: Qualify Lead
+  description: Scores and summarizes a sales prospect using qualification signals.
+  source: sales_app.agents.tools.qualify_lead:qualify_lead_tool
+- tool_id: calculate_quote
+  name: Calculate Quote
+  description: Calculates a first-term sales quote with seats, billing term, discount,
+    and fees.
+  source: sales_app.agents.tools.calculate_quote:calculate_quote_tool
+- tool_id: draft_follow_up
+  name: Draft Follow Up
+  description: Drafts a sales follow-up email from meeting notes, pain points, and
+    next steps.
+  source: sales_app.agents.tools.draft_follow_up:draft_follow_up_tool
+- tool_id: plan_outreach
+  name: Plan Outreach
+  description: Builds a multi-touch outbound sequence for a target account and buyer
+    persona.
+  source: sales_app.agents.tools.plan_outreach:plan_outreach_tool

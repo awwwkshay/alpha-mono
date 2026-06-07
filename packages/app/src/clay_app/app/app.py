@@ -30,6 +30,8 @@ from clay_core import AppConfig, AppContext, AppId, ServerConfig
 if TYPE_CHECKING:
     from fastapi import APIRouter
 
+AppContext.model_rebuild(_types_namespace={"Agent": Agent, "Workflow": Workflow})
+
 
 _owned_tracer_provider: TracerProvider | None = None
 _owned_tracer_provider_refcount = 0
@@ -96,8 +98,10 @@ class ClayApp:
             workflows=self.workflows,
             agents=self.agents,
             workspace=global_workspace,
-            agent_contexts=self._agent_contexts,
         )
+        # Assign after construction so all contexts share the exact same dict object
+        # (Pydantic copies dicts during field validation in the constructor).
+        self.context.agent_contexts = self._agent_contexts
         server_cfg = config.server or ServerConfig()
         if not server_cfg.title:
             server_cfg = server_cfg.model_copy(update={"title": config.name})
@@ -108,6 +112,9 @@ class ClayApp:
         for agent_app_id, agent_config in self.config.agents.items():
             for chat_integration in agent_config.chat:
                 chat_integration.mount(self, self.agents[agent_app_id], agent_app_id)
+
+        for chat_id, chat_integration in self.config.chat_apps.items():
+            chat_integration.mount(self, None, chat_id)
 
     def _setup_tracing(self, config: AppConfig) -> None:
         global _owned_tracer_provider, _owned_tracer_provider_refcount
@@ -158,6 +165,8 @@ class ClayApp:
         for agent_config in self.config.agents.values():
             for chat_integration in agent_config.chat:
                 await chat_integration.setup()
+        for chat_integration in self.config.chat_apps.values():
+            await chat_integration.setup()
         logger.info(f"App '{self.config.name}' setup complete")
 
     async def teardown(self) -> None:

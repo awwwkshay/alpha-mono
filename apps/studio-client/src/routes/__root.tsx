@@ -1,5 +1,4 @@
 import { Link, Outlet, createRootRoute } from "@tanstack/react-router";
-import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import {
   Bot,
   Boxes,
@@ -8,6 +7,7 @@ import {
   FolderTree,
   Gauge,
   GitBranch,
+  KeyRound,
   LayoutDashboard,
   ListChecks,
   Loader2,
@@ -26,13 +26,14 @@ import { STUDIO_SYNC_EVENT, syncProject } from "@/lib/api";
 
 const navItems = [
   { to: "/", label: "Overview", icon: LayoutDashboard },
+  { to: "/environment", label: "Environment", icon: KeyRound },
   {
     to: "/agents",
     label: "Agents",
     icon: Bot,
     children: [
       { to: "/agents/tools", label: "Tools", icon: Wrench },
-      { to: "/agents/interfaces", label: "Interfaces", icon: Plug },
+      { to: "/agents/chat-interfaces", label: "Chat Interfaces", icon: Plug },
     ],
   },
   {
@@ -153,8 +154,6 @@ function StudioLayout() {
           <Outlet />
         </main>
       </div>
-
-      <TanStackRouterDevtools position="bottom-right" />
     </div>
   );
 }

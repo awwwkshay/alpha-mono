@@ -19,6 +19,7 @@ def test_init_app_creates_minimal_clay_app(tmp_path):
         (app_dir / "README.md").read_text(encoding="utf-8").startswith("# my-test-app")
     )
     assert (app_dir / ".env.example").exists()
+    assert ".env" in (app_dir / ".gitignore").read_text(encoding="utf-8")
     assert (app_dir / "clay.yaml").exists()
     assert (app_dir / "src" / "my_test_app" / "__init__.py").exists()
 
@@ -64,3 +65,10 @@ def test_cli_includes_studio_command():
 
     assert result.exit_code == 0
     assert "Start the local Clay Studio server" in result.stdout
+
+
+def test_cli_supports_short_help_flag():
+    result = runner.invoke(app, ["-h"])
+
+    assert result.exit_code == 0
+    assert "Command-line tools for Clay apps." in result.stdout

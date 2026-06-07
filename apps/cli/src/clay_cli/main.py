@@ -7,7 +7,10 @@ from typing import Annotated
 import typer
 
 
-app = typer.Typer(help="Command-line tools for Clay apps.")
+app = typer.Typer(
+    context_settings={"help_option_names": ["-h", "--help"]},
+    help="Command-line tools for Clay apps.",
+)
 
 
 class InitError(RuntimeError):
@@ -58,6 +61,12 @@ dependencies = [
     "clay-app==0.0.1",
 ]
 
+[dependency-groups]
+dev = [
+    "ruff>=0.15.14",
+    "ty>=0.0.39",
+]
+
 [project.scripts]
 {app_name} = "{module_name}.main:run"
 
@@ -71,6 +80,28 @@ port = 3000
 open_browser = true
 client_host = "127.0.0.1"
 client_port = 5173
+
+[tool.ruff]
+line-length = 88
+target-version = "py314"
+src = ["src"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "C90"]
+ignore = ["E203", "E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.ty]
+python-version = "3.14"
+
+[tool.ty.rules]
+division-by-zero = "warn"
 """
 
 
@@ -132,6 +163,41 @@ def _init_py(app_name: str) -> str:
     return f'"""Generated Clay app package for {app_name}."""\n'
 
 
+def _env_example() -> str:
+    return """# Add local secrets here, then copy to .env.
+# Studio keeps keys in sync and strips values from this example file.
+"""
+
+
+def _gitignore() -> str:
+    return """.env
+.venv/
+__pycache__/
+*.pyc
+"""
+
+
+def _vscode_settings() -> str:
+    return """{
+    "[python]": {
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.fixAll.ruff": "explicit",
+            "source.organizeImports.ruff": "explicit"
+        }
+    },
+    "python.languageServer": "None",
+    "ruff.enable": true,
+    "ruff.lint.enable": true,
+    "ty.disableLanguageServices": false,
+    "ty.diagnosticMode": "workspace",
+    "ty.importStrategy": "fromEnvironment",
+    "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python"
+}
+"""
+
+
 def _clay_yaml(app_name: str) -> str:
     return f"""version: 1
 app:
@@ -162,11 +228,8 @@ def init_app(
     )
     _write_file(target_dir / "README.md", _readme(app_name), force=force)
     _write_file(target_dir / "clay.yaml", _clay_yaml(app_name), force=force)
-    _write_file(
-        target_dir / ".env.example",
-        "# Add model provider API keys here.\n",
-        force=force,
-    )
+    _write_file(target_dir / ".env.example", _env_example(), force=force)
+    _write_file(target_dir / ".gitignore", _gitignore(), force=force)
     _write_file(
         target_dir / "src" / module_name / "__init__.py",
         _init_py(app_name),
@@ -174,6 +237,9 @@ def init_app(
     )
     _write_file(
         target_dir / "src" / module_name / "main.py", _main_py(app_name), force=force
+    )
+    _write_file(
+        target_dir / ".vscode" / "settings.json", _vscode_settings(), force=force
     )
 
     return target_dir
