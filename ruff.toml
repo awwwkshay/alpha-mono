@@ -6,6 +6,10 @@ src = [
     "packages/chat/src",
     "apps/examples/basic-app/src",
     "apps/examples/personal-agent/src",
+    "apps/cli/src",
+    "apps/cli/tests",
+    "apps/studio-server/src",
+    "apps/studio-server/tests",
 ]
 
 [lint]

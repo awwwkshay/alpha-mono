@@ -1,0 +1,27 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "sales-app"
+version = "0.0.1"
+description = "A Clay app"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "clay-app==0.0.1",
+]
+
+[project.scripts]
+sales-app = "sales_app.main:run"
+
+[tool.clay]
+app = "sales_app.main:APP"
+
+[tool.clay.studio]
+mode = "production"
+host = "127.0.0.1"
+port = 3000
+open_browser = true
+client_host = "127.0.0.1"
+client_port = 5173

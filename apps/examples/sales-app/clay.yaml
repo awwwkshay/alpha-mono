@@ -1,0 +1,21 @@
+version: 1
+app:
+  name: sales-app
+agents: {}
+workflows: {}
+workspaces:
+  sales-workspace:
+    name: sales-workspace
+    description: Local workspace for sales app files and generated artifacts.
+    filesystem:
+      type: local
+      base_path: workspaces/sales-workspace
+      contained: true
+      read_only: false
+      allowed_paths: []
+    sandbox:
+      type: local
+      working_directory: workspaces/sales-workspace
+      env: {}
+      timeout: 30
+      isolation: none

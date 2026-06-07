@@ -32,6 +32,8 @@ clay-mono/
 │   ├── app/                # clay-app  — Agent, ClayApp, Workflow, Workspace, Evals
 │   └── chat/               # clay-chat — Slack, Telegram, GitHub integrations
 └── apps/
+    ├── cli/               # clay-cli — command-line app scaffolding
+    ├── studio-server/     # clay-studio-server — local Studio API and SPA server
     └── examples/
         ├── basic-app/      # Example: multi-agent code reviewer
         └── personal-agent/ # Example: Slack-connected personal assistant
@@ -48,6 +50,25 @@ uv sync --all-packages
 ```
 
 Copy `.env.example` to `.env` in the relevant app directory and add your API keys (any provider supported by litellm).
+
+---
+
+## CLI
+
+Initialize a new Clay app:
+
+```bash
+uv run clay init my-app
+```
+
+The command creates a minimal runnable app with `pyproject.toml`, `README.md`,
+`clay.yaml`, `.env.example`, and a `src/<module>/main.py` entry point.
+
+Start the local Studio UI from a Clay app directory:
+
+```bash
+uv run clay studio
+```
 
 ---
 
@@ -209,3 +230,5 @@ The Slack router exposes `/events` (Events API + URL verification), `/commands` 
 | `clay-core`  | Schemas, contracts, and interfaces — the framework's type layer              |
 | `clay-app`   | Runtime implementations — `Agent`, `ClayApp`, `Workflow`, `Workspace`, `Evals` |
 | `clay-chat`  | Chat integrations — Slack, Telegram, GitHub clients, adapters, and endpoints |
+| `clay-cli`   | CLI commands for initializing Clay apps                                      |
+| `clay-studio-server` | Local FastAPI server and embedded SPA assets for Clay Studio         |

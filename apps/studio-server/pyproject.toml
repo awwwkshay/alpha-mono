@@ -1,0 +1,23 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "clay-studio-server"
+version = "0.0.1"
+description = "Local FastAPI server for the Clay Studio developer UI."
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "clay-app==0.0.1",
+    "fastapi>=0.115.0",
+    "pyyaml>=6.0.2",
+    "uvicorn>=0.34.0",
+]
+
+[tool.uv.sources]
+clay-app = { workspace = true }
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/clay_studio_server"]
+artifacts = ["src/clay_studio_server/studio_dist/**"]
