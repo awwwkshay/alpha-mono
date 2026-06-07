@@ -11,6 +11,8 @@ dev = [
     "clay-core",
     "clay-chat",
     "clay-app",
+    "clay-cli",
+    "clay-studio-server",
     "basic-app",
     "personal-agent",
     "pre-commit>=4.6.0",
@@ -28,8 +30,15 @@ addopts = "--import-mode=importlib"
 clay-core = { workspace = true }
 clay-chat = { workspace = true }
 clay-app = { workspace = true }
+clay-cli = { workspace = true }
+clay-studio-server = { workspace = true }
 basic-app = { workspace = true }
 personal-agent = { workspace = true }
 
 [tool.uv.workspace]
-members = ["packages/*", "apps/examples/*"]
+members = [
+    "packages/*",
+    "apps/examples/*",
+    "apps/cli",
+    "apps/studio-server",
+]

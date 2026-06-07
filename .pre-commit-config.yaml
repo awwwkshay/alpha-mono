@@ -3,25 +3,25 @@ repos:
     hooks:
       - id: unit-test
         name: unit-test
-        entry: uv run pytest packages/core/tests/
+        entry: uv run --locked pytest packages/core/tests/
         language: system
         pass_filenames: false
         always_run: true
       - id: ruff-format
         name: ruff-format
-        entry: uv run ruff format
+        entry: uv run --locked ruff format
         language: system
         types: [python]
 
       - id: ruff-lint
         name: ruff-lint
-        entry: uv run ruff check --fix
+        entry: uv run --locked ruff check --fix
         language: system
         types: [python]
 
       - id: ty-type-check
         name: ty-type-check
-        entry: uv run ty check
+        entry: uv run --locked ty check
         language: system
         types: [python]
         pass_filenames: false
